@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Roteiros Cervejeiros — HopPass</title>
+  <link rel="stylesheet" href="../css/design-system.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+/* hero */
+.page-hero { background:var(--ink);padding:56px 0 48px;position:relative;overflow:hidden; }
+.page-hero::before { content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 60%,rgba(212,134,10,.18) 0%,transparent 60%); }
+.page-hero h1 { font-family:var(--ff-display);font-size:3rem;font-weight:700;color:var(--paper);line-height:1.1;margin-bottom:10px; }
+.page-hero p  { font-size:.95rem;color:rgba(245,240,232,.58);max-width:500px;line-height:1.6; }
+.page-hero__chips { display:flex;gap:10px;margin-top:22px;flex-wrap:wrap; }
+.chip { padding:6px 16px;border-radius:100px;border:1px solid rgba(245,240,232,.15);background:rgba(245,240,232,.06);font-family:var(--ff-mono);font-size:.67rem;color:rgba(245,240,232,.65); }
+
+/* ── layout ── */
+.roteiros-layout { display:grid;grid-template-columns:1fr 420px;min-height:800px; }
+
+/* ── grid panel ── */
+.roteiros-grid-panel { padding:32px;background:var(--paper);overflow-y:auto; }
+.roteiros-grid { display:grid;grid-template-columns:1fr 1fr;gap:16px; }
+
+/* ── route card ── */
+.rcard {
+  border-radius:var(--radius-lg);overflow:hidden;
+  background:var(--foam);border:1.5px solid var(--paper3);
+  cursor:pointer;transition:transform .2s,box-shadow .2s,border-color .2s;
+  text-decoration:none;color:inherit;display:block;
+}
+.rcard:hover { transform:translateY(-4px);box-shadow:var(--shadow-md); }
+.rcard.active { border-color:var(--amber);box-shadow:0 0 0 3px rgba(212,134,10,.18); }
+.rcard__header { height:130px;position:relative;background-size:cover;background-position:center; }
+.rcard__header-overlay { position:absolute;inset:0;background:linear-gradient(to bottom,transparent 30%,rgba(26,18,8,.8) 100%); }
+.rcard__header-content { position:absolute;bottom:0;left:0;right:0;padding:14px 16px; }
+.rcard__name { font-family:var(--ff-display);font-size:1rem;font-weight:600;color:white;line-height:1.2; }
+.rcard__region { font-family:var(--ff-mono);font-size:.6rem;color:rgba(255,255,255,.6);margin-top:2px; }
+.rcard__body { padding:14px 16px; }
+.rcard__desc { font-size:.82rem;color:var(--ink3);line-height:1.5;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
+.rcard__tags { display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px; }
+.rcard__meta { display:flex;gap:14px;padding-top:10px;border-top:1px solid var(--paper3);font-family:var(--ff-mono);font-size:.62rem;color:var(--ink3); }
+.rcard__cta { margin-top:10px; }
+
+/* ── map panel ── */
+.roteiros-map-panel { position:sticky;top:62px;height:calc(100vh - 62px); }
+#roteiros-map { height:100%;width:100%; }
+
+/* ── route detail drawer (aparece abaixo do mapa) ── */
+.route-info-bar {
+  background:var(--ink);padding:0;max-height:0;overflow:hidden;
+  transition:max-height .4s ease;
+  position:sticky;bottom:0;z-index:50;
+}
+.route-info-bar.open { max-height:200px; }
+.route-info-bar__inner { padding:18px 28px;display:flex;gap:24px;align-items:center; }
+.route-info-bar__name { font-family:var(--ff-display);font-size:1.2rem;color:var(--paper);flex:1; }
+.route-info-bar__stats { display:flex;gap:20px; }
+.route-info-bar__stat { text-align:center; }
+.route-info-bar__stat .n { font-family:var(--ff-display);font-size:1.3rem;font-weight:700;color:var(--amber3);display:block; }
+.route-info-bar__stat .l { font-family:var(--ff-mono);font-size:.58rem;color:rgba(245,240,232,.4); }
+
+/* popup */
+.rp { font-family:'IBM Plex Sans',sans-serif; }
+.rp h4 { font-family:'Fraunces',serif;font-size:.95rem;color:#1A1208;margin-bottom:4px; }
+.rp p  { font-size:.73rem;color:#7A6550; }
+.rp a  { font-size:.72rem;color:#D4860A;font-family:'DM Mono',monospace;display:block;margin-top:6px; }
+
+@keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+  <div id="nav-placeholder" data-page="roteiros.html"></div>
+
+  <section class="page-hero">
+    <div class="container" style="position:relative;z-index:1">
+      <p class="t-label" style="color:var(--amber3);margin-bottom:12px">🗺️ Roteiros</p>
+      <h1>Roteiros pelo<br>Brasil craft</h1>
+      <p>Viagens curadas pelas melhores regiões cervejeiras do Brasil. Clica num roteiro para ver o percurso no mapa.</p>
+      <div class="page-hero__chips" id="heroChips">
+        <span class="chip" id="chipBreweries">— paradas</span>
+        <span class="chip" id="chipRoutes">— roteiros</span>
+        <span class="chip">Até 2 dias por roteiro</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="roteiros-layout">
+
+    <!-- GRID -->
+    <div class="roteiros-grid-panel">
+      <p class="t-label mb-16">Todos os roteiros · clica para ver no mapa</p>
+      <div class="roteiros-grid" id="roteirosGrid">
+        ${Array(6).fill(0).map(()=>`<div class="skeleton" style="height:260px;border-radius:14px"></div>`).join('')}
+      </div>
+    </div>
+
+    <!-- MAP -->
+    <div class="roteiros-map-panel">
+      <div id="roteiros-map"></div>
+    </div>
+
+  </div>
+
+  <div id="footer-placeholder"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="../js/shared.js"></script>
+  <script>
+  const ROUTE_COLORS = ['#D4860A','#E74C3C','#2ECC71','#3498DB','#9B59B6','#E67E22','#1ABC9C','#E91E63'];
+  let map, routeLayers = {}, activeId = null;
+
+  function initMap() {
+    map = L.map('roteiros-map',{center:[-20,-48],zoom:5});
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:18}).addTo(map);
+  }
+
+  async function showRouteOnMap(route, color) {
+    if (routeLayers[route.id]) return; // already loaded
+    const stops = await db.routes.breweries(route.id);
+    if (!stops?.length) return;
+    const group = L.layerGroup();
+    const coords = [];
+    stops.forEach((s,i) => {
+      const b = s.breweries;
+      if (!b?.latitude || !b?.longitude) return;
+      coords.push([b.latitude, b.longitude]);
+      const m = L.marker([b.latitude, b.longitude], { icon: numberedMarker(L, i+1, color) })
+        .bindPopup(`<div class="rp"><h4>${i+1}. ${b.name}</h4><p>📍 ${b.city||''}, ${b.state||''}</p>${s.stop_notes?`<p>${s.stop_notes}</p>`:''}<a href="cervejaria.html?slug=${b.slug}">Ver cervejaria →</a></div>`);
+      group.addLayer(m);
+    });
+    if (coords.length > 1) {
+      const poly = L.polyline(coords, {color, weight:3, opacity:.85, dashArray:'9 5'});
+      group.addLayer(poly);
+    }
+    routeLayers[route.id] = {group, coords};
+  }
+
+  async function selectRoute(route, color, cardEl) {
+    // deactivate all
+    document.querySelectorAll('.rcard').forEach(c=>c.classList.remove('active'));
+    Object.values(routeLayers).forEach(r => map.removeLayer(r.group));
+
+    cardEl.classList.add('active');
+    activeId = route.id;
+
+    await showRouteOnMap(route, color);
+    const rl = routeLayers[route.id];
+    if (!rl) return;
+    rl.group.addTo(map);
+    if (rl.coords.length) map.fitBounds(rl.coords, {padding:[48,48]});
+  }
+
+  async function load() {
+    initMap();
+    const routes = await db.routes.all(20);
+    if (!routes?.length) {
+      document.getElementById('roteirosGrid').innerHTML = `<div style="padding:40px;color:var(--ink3);font-family:var(--ff-mono)">Nenhum roteiro encontrado.</div>`;
+      return;
+    }
+
+    document.getElementById('chipRoutes').textContent = `${routes.length} roteiros`;
+    const totalBreweries = routes.reduce((a,r)=>a+(r.brewery_count||0),0);
+    document.getElementById('chipBreweries').textContent = `${totalBreweries} paradas`;
+
+    document.getElementById('roteirosGrid').innerHTML = routes.map((r, i) => {
+      const color = ROUTE_COLORS[i % ROUTE_COLORS.length];
+      const bg = r.cover_image_url ? `url('${r.cover_image_url}')` : `linear-gradient(135deg,${color}cc,${color}66)`;
+      const hs = (r.highlights||[]).slice(0,2);
+      return `<div class="rcard" data-id="${r.id}" data-color="${color}" onclick="handleCardClick(this,'${r.id}',${i})">
+        <div class="rcard__header" style="background:${bg};background-size:cover;background-position:center">
+          <div class="rcard__header-overlay"></div>
+          <div class="rcard__header-content">
+            <p class="rcard__name">${r.name}</p>
+            <p class="rcard__region">📍 ${r.city||''}, ${r.state||''}</p>
+          </div>
+        </div>
+        <div class="rcard__body">
+          ${r.description ? `<p class="rcard__desc">${r.description}</p>` : ''}
+          ${hs.length ? `<div class="rcard__tags">${hs.map(h=>`<span class="tag tag--amber" style="font-size:.58rem">${h}</span>`).join('')}</div>` : ''}
+          <div class="rcard__meta">
+            <span>🏭 ${r.brewery_count||'?'}</span>
+            <span>📅 ${r.duration_days===1?'1 dia':(r.duration_days||1)+' dias'}</span>
+            ${r.distance_km?`<span>🗺️ ${r.distance_km}km</span>`:''}
+            ${r.budget_estimate?`<span>💰 ${r.budget_estimate}</span>`:''}
+          </div>
+          <div class="rcard__cta">
+            <a href="roteiro.html?slug=${r.slug}" class="btn btn--amber btn--sm" onclick="event.stopPropagation()">Ver roteiro completo →</a>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    // store routes for onclick
+    window._routes = routes;
+
+    // auto-select first
+    setTimeout(() => {
+      const firstCard = document.querySelector('.rcard');
+      if (firstCard) firstCard.click();
+    }, 400);
+  }
+
+  async function handleCardClick(el, id, i) {
+    const route = window._routes?.find(r=>r.id===id);
+    if (!route) return;
+    const color = ROUTE_COLORS[i % ROUTE_COLORS.length];
+    await selectRoute(route, color, el);
+  }
+
+  load();
+  </script>
+</body>
+</html>

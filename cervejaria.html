@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Cervejaria — HopPass</title>
+  <link rel="stylesheet" href="../css/design-system.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+.brewery-hero { background:var(--ink);padding:56px 0 0;position:relative;overflow:hidden; }
+.brewery-hero__bg { position:absolute;inset:0;background-size:cover;background-position:center;opacity:.25; }
+.brewery-hero__overlay { position:absolute;inset:0;background:linear-gradient(to bottom,rgba(26,18,8,.6) 0%,rgba(26,18,8,.95) 100%); }
+.brewery-hero__inner { position:relative;z-index:1;display:grid;grid-template-columns:1fr auto;gap:40px;align-items:center; }
+.brewery-hero__back { font-family:var(--ff-mono);font-size:.7rem;color:rgba(245,240,232,.42);margin-bottom:18px; }
+.brewery-hero__back a { color:var(--amber3); }
+.brewery-hero__logo { width:72px;height:72px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--ff-display);font-size:1.5rem;font-weight:700;color:white;margin-bottom:14px;background-size:cover;background-position:center; }
+.brewery-hero__name { font-family:var(--ff-display);font-size:2.4rem;font-weight:700;color:var(--paper);line-height:1.1;margin-bottom:6px; }
+.brewery-hero__loc  { font-family:var(--ff-mono);font-size:.78rem;color:rgba(245,240,232,.48);margin-bottom:14px; }
+.brewery-hero__tags { display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px; }
+.brewery-hero__actions { display:flex;gap:12px; }
+.brewery-hero__stats { display:flex;gap:0; }
+.brewery-hero__stat { text-align:center;padding:22px 26px;border-left:1px solid rgba(245,240,232,.08); }
+.brewery-hero__stat .n { font-family:var(--ff-display);font-size:1.8rem;font-weight:700;color:var(--amber3);display:block; }
+.brewery-hero__stat .l { font-family:var(--ff-mono);font-size:.6rem;color:rgba(245,240,232,.35);text-transform:uppercase; }
+.brewery-hero__bottom { border-top:1px solid rgba(245,240,232,.08);padding:14px 0;margin-top:28px;display:flex;gap:28px;align-items:center;flex-wrap:wrap; }
+.brewery-hero__link { font-family:var(--ff-mono);font-size:.7rem;color:rgba(245,240,232,.45); }
+.brewery-hero__link a { color:var(--amber3); }
+
+/* tabs */
+.brewery-tabs { background:var(--foam);border-bottom:2px solid var(--paper3);position:sticky;top:62px;z-index:100; }
+.brewery-tabs__inner { display:flex; }
+.btab { padding:15px 26px;font-family:var(--ff-mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;border:none;background:none;color:var(--ink3);border-bottom:2.5px solid transparent;margin-bottom:-2px;transition:all .2s; }
+.btab.active { color:var(--amber);border-bottom-color:var(--amber); }
+.btab:hover { color:var(--ink); }
+
+/* content */
+.brewery-content { padding:48px 0; }
+.brewery-grid { display:grid;grid-template-columns:1fr 340px;gap:40px;align-items:start; }
+.beers-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:13px; }
+.bgrid-card { background:var(--foam);border:1px solid var(--paper3);border-radius:var(--radius-lg);padding:16px 11px 11px;display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;transition:transform .22s,box-shadow .22s;text-decoration:none;color:inherit;text-align:center; }
+.bgrid-card:hover { transform:translateY(-5px);box-shadow:0 8px 22px rgba(212,134,10,.18); }
+.bgrid-card img { width:46px;height:68px;object-fit:contain; }
+.bgrid-card__name { font-family:var(--ff-mono);font-size:.68rem;font-weight:500;line-height:1.3; }
+.bgrid-card__s { font-family:var(--ff-mono);font-size:.58rem;color:var(--ink3); }
+.bgrid-card__r { font-family:var(--ff-mono);font-size:.65rem;color:var(--amber); }
+
+/* sidebar */
+.map-widget { border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--paper3); }
+#brewery-map { height:220px; }
+.info-card { background:var(--foam);border:1px solid var(--paper3);border-radius:var(--radius-lg);padding:18px;margin-top:14px; }
+.info-card h4 { font-family:var(--ff-mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);margin-bottom:12px; }
+.info-row { display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--paper3); }
+.info-row:last-child { border-bottom:none; }
+.info-row__l { font-family:var(--ff-mono);font-size:.7rem;color:var(--ink3); }
+.info-row__v { font-family:var(--ff-mono);font-size:.72rem;font-weight:500; }
+
+@keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+  <div id="nav-placeholder" data-page="cervejarias.html"></div>
+  <div id="breweryPage">
+    <div style="display:flex;align-items:center;justify-content:center;height:60vh;gap:12px;color:var(--ink3);font-family:var(--ff-mono);font-size:.8rem">
+      <div style="width:20px;height:20px;border:2px solid var(--paper3);border-top-color:var(--amber);border-radius:50%;animation:spin .8s linear infinite"></div>
+      A carregar cervejaria...
+    </div>
+  </div>
+  <div id="footer-placeholder"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="../js/shared.js"></script>
+  <script>
+  const slug = new URLSearchParams(location.search).get('slug');
+
+  async function load() {
+    if (!slug) return;
+    const arr = await db.breweries.bySlug(slug);
+    const b = arr?.[0];
+    if (!b) { document.getElementById('breweryPage').innerHTML=`<div style="padding:80px;text-align:center;color:var(--ink3);font-family:var(--ff-mono)">Cervejaria não encontrada.</div>`; return; }
+    document.title = `${b.name} — HopPass`;
+
+    const beers = await db.beers.byBrewery(b.id, 24);
+    const [c1,c2] = styleColors((b.identity_tags||[])[0]||'');
+
+    document.getElementById('breweryPage').innerHTML = `
+    <!-- HERO -->
+    <section class="brewery-hero">
+      ${b.cover_image_url?`<div class="brewery-hero__bg" style="background-image:url('${b.cover_image_url}')"></div>`:''}
+      <div class="brewery-hero__overlay"></div>
+      <div class="container">
+        <div class="brewery-hero__inner">
+          <div>
+            <p class="brewery-hero__back"><a href="cervejarias.html">← Cervejarias</a> / ${b.name}</p>
+            <div class="brewery-hero__logo" style="${b.logo_url?`background-image:url('${b.logo_url}')`:``}background:linear-gradient(135deg,${c1},${c2})">${b.logo_url?'':breweryInitials(b.name)}</div>
+            <h1 class="brewery-hero__name">${b.name}</h1>
+            <p class="brewery-hero__loc">📍 ${b.city||''}${b.city&&b.state?', ':''}${b.state||''} · Brasil</p>
+            ${(b.identity_tags||[]).length?`<div class="brewery-hero__tags">${b.identity_tags.slice(0,5).map(t=>`<span class="tag" style="background:${c1}22;color:${c1}">${t}</span>`).join('')}</div>`:''}
+            <div class="brewery-hero__actions">
+              <a href="#" class="btn btn--amber btn--sm">Check-in aqui</a>
+              <a href="#" class="btn btn--ghost btn--sm">Partilhar</a>
+            </div>
+          </div>
+          <div class="brewery-hero__stats">
+            <div class="brewery-hero__stat"><span class="n">${beers?.length||0}</span><span class="l">Cervejas</span></div>
+            ${b.founded_year?`<div class="brewery-hero__stat"><span class="n">${b.founded_year}</span><span class="l">Fundada</span></div>`:''}
+            ${b.has_taproom?`<div class="brewery-hero__stat"><span class="n" style="font-size:1.2rem">✓</span><span class="l">Taproom</span></div>`:''}
+          </div>
+        </div>
+        <div class="brewery-hero__bottom">
+          ${b.website?`<span class="brewery-hero__link">🌐 <a href="${b.website}" target="_blank">${b.website.replace(/https?:\/\//,'')}</a></span>`:''}
+          ${b.google_maps_url?`<span class="brewery-hero__link">🗺️ <a href="${b.google_maps_url}" target="_blank">Ver no Google Maps</a></span>`:''}
+          ${b.instagram_url?`<span class="brewery-hero__link">📷 <a href="${b.instagram_url}" target="_blank">Instagram</a></span>`:''}
+        </div>
+      </div>
+    </section>
+
+    <!-- TABS -->
+    <div class="brewery-tabs">
+      <div class="container">
+        <div class="brewery-tabs__inner">
+          <button class="btab active" onclick="showTab('cervejas',this)">🍺 Cervejas (${beers?.length||0})</button>
+          <button class="btab" onclick="showTab('sobre',this)">ℹ️ Sobre</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <section class="brewery-content">
+      <div class="container">
+        <div class="brewery-grid">
+          <div>
+            <div id="tab-cervejas">
+              <div class="beers-grid">
+                ${(beers||[]).map(bv=>`
+                  <a href="cerveja.html?slug=${bv.slug}" class="bgrid-card">
+                    <img src="${beerImg(bv)}" alt="${bv.name}" onerror="this.src='${canSVG(bv.name,bv.style)}'">
+                    <span class="bgrid-card__name">${bv.name}</span>
+                    <span class="bgrid-card__s">${bv.style||bv.category||''}</span>
+                    <div style="display:flex;gap:6px;align-items:center">
+                      ${bv.avg_rating?`<span class="bgrid-card__r">${Number(bv.avg_rating).toFixed(1)} ★</span>`:''}
+                      ${bv.abv?`<span class="bgrid-card__s">${bv.abv}%</span>`:''}
+                    </div>
+                  </a>`).join('') || '<p style="color:var(--ink3);font-family:var(--ff-mono);font-size:.8rem">Nenhuma cerveja no catálogo.</p>'}
+              </div>
+            </div>
+            <div id="tab-sobre" style="display:none">
+              ${b.description||b.editorial_note||b.founders_story?`
+                <h2 style="font-family:var(--ff-display);font-size:1.4rem;margin-bottom:16px">Sobre a ${b.name}</h2>
+                <p style="font-size:.92rem;color:var(--ink2);line-height:1.8;max-width:600px">${b.description||b.editorial_note||b.founders_story}</p>
+              `:`<p style="color:var(--ink3);font-family:var(--ff-mono);font-size:.8rem">Sem informação adicional disponível.</p>`}
+            </div>
+          </div>
+
+          <!-- SIDEBAR -->
+          <div>
+            ${b.latitude&&b.longitude?`<div class="map-widget"><div id="brewery-map"></div></div>`:''}
+            <div class="info-card">
+              <h4>Informações</h4>
+              ${[[`Estado`,`${b.city||''}${b.city&&b.state?', ':''}${b.state||''}`],[`Endereço`,b.full_address],[`Fundada em`,b.founded_year],[`Taproom`,b.has_taproom?'Sim':'Não'],[`Visitas guiadas`,b.has_tours?'Sim':'Não']].filter(([,v])=>v).map(([l,v])=>`
+                <div class="info-row"><span class="info-row__l">${l}</span><span class="info-row__v">${v}</span></div>`).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>`;
+
+    // ── MAP
+    if (b.latitude && b.longitude) {
+      const map = L.map('brewery-map',{center:[b.latitude,b.longitude],zoom:14,zoomControl:false});
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:18}).addTo(map);
+      L.marker([b.latitude,b.longitude],{icon:dotMarker(L,18)}).addTo(map).bindPopup(`<strong>${b.name}</strong>`);
+    }
+  }
+
+  function showTab(name, el) {
+    document.querySelectorAll('.btab').forEach(b=>b.classList.remove('active'));
+    el.classList.add('active');
+    ['cervejas','sobre'].forEach(t=>{ const d=document.getElementById('tab-'+t); if(d) d.style.display=t===name?'block':'none'; });
+  }
+
+  load();
+  </script>
+</body>
+</html>

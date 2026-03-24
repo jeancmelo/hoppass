@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Cervejas — HopPass</title>
+  <link rel="stylesheet" href="../css/design-system.css">
+  <style>
+/* hero */
+.page-hero { background:var(--ink);padding:48px 0 36px; }
+.page-hero h1 { font-family:var(--ff-display);font-size:2.6rem;font-weight:700;color:var(--paper);line-height:1.1;margin-bottom:10px; }
+.page-hero p  { font-size:.9rem;color:rgba(245,240,232,.52);max-width:500px;line-height:1.6;margin-bottom:24px; }
+.hero-search { display:flex;gap:0;max-width:480px;background:rgba(245,240,232,.08);border:1px solid rgba(245,240,232,.15);border-radius:100px;overflow:hidden; }
+.hero-search input { flex:1;padding:12px 22px;background:none;border:none;font-family:var(--ff-mono);font-size:.8rem;color:var(--paper);outline:none; }
+.hero-search input::placeholder { color:rgba(245,240,232,.32); }
+.hero-search button { padding:11px 24px;background:var(--amber);border:none;font-family:var(--ff-mono);font-size:.76rem;color:var(--ink);font-weight:600;cursor:pointer;transition:background .2s; }
+.hero-search button:hover { background:var(--amber3); }
+
+/* styles section */
+.styles-section { padding:52px 0;background:var(--paper2); }
+.styles-grid { display:grid;grid-template-columns:repeat(6,1fr);gap:12px; }
+.style-chip { border-radius:var(--radius-lg);padding:18px 12px;cursor:pointer;text-align:center;transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden; }
+.style-chip:hover { transform:translateY(-4px);box-shadow:var(--shadow-md); }
+.style-chip.active { outline:2.5px solid var(--amber);outline-offset:3px; }
+.style-chip__emoji { font-size:1.8rem;display:block;margin-bottom:7px; }
+.style-chip__name  { font-family:var(--ff-mono);font-size:.7rem;font-weight:500;color:white;line-height:1.2; }
+.style-chip__count { font-family:var(--ff-mono);font-size:.58rem;color:rgba(255,255,255,.55);margin-top:3px; }
+
+/* filter bar */
+.filter-bar { background:var(--foam);border-bottom:1px solid var(--paper3);padding:11px 0;position:sticky;top:62px;z-index:100; }
+.filter-bar__inner { display:flex;gap:8px;align-items:center;flex-wrap:wrap; }
+.fb-chip { padding:7px 16px;border-radius:100px;border:1px solid var(--paper3);background:var(--paper);font-family:var(--ff-mono);font-size:.7rem;cursor:pointer;transition:all .18s;color:var(--ink2); }
+.fb-chip.active { background:var(--ink);color:var(--paper);border-color:var(--ink); }
+.fb-chip:hover:not(.active) { border-color:var(--amber);color:var(--amber); }
+.fb-sel { background:var(--paper);border:1px solid var(--paper3);border-radius:100px;padding:7px 14px;font-family:var(--ff-mono);font-size:.7rem;color:var(--ink2);outline:none;cursor:pointer; }
+.fb-count { margin-left:auto;font-family:var(--ff-mono);font-size:.7rem;color:var(--ink3); }
+
+/* regions */
+.regions-section { padding:60px 0; }
+.regions-scroll { display:flex;gap:20px;overflow-x:auto;padding-bottom:8px;scrollbar-width:thin;scrollbar-color:var(--paper3) transparent; }
+.region-block { flex:0 0 220px; }
+.region-block__header { background:var(--ink);border-radius:var(--radius-lg) var(--radius-lg) 0 0;padding:12px 16px; }
+.region-block__title { font-family:var(--ff-display);font-size:.9rem;font-weight:600;color:var(--paper); }
+.region-block__sub   { font-family:var(--ff-mono);font-size:.6rem;color:rgba(245,240,232,.4);margin-top:1px; }
+.region-block__beers { border:1px solid var(--paper3);border-top:none;border-radius:0 0 var(--radius-lg) var(--radius-lg);background:var(--foam);overflow:hidden; }
+.rbeer-row { display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--paper3);cursor:pointer;transition:background .15s;text-decoration:none;color:inherit; }
+.rbeer-row:last-child { border-bottom:none; }
+.rbeer-row:hover { background:var(--paper2); }
+.rbeer-row img { width:22px;height:32px;object-fit:contain;flex-shrink:0; }
+.rbeer-row__name { font-family:var(--ff-mono);font-size:.7rem;font-weight:500;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.rbeer-row__r { font-family:var(--ff-mono);font-size:.65rem;color:var(--amber); }
+
+/* beer grid */
+.beers-section { padding:52px 0; }
+.beers-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:14px; }
+.bgrid-card { background:var(--foam);border:1px solid var(--paper3);border-radius:var(--radius-lg);padding:18px 12px 12px;display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;transition:transform .22s,box-shadow .22s;text-decoration:none;color:inherit;text-align:center; }
+.bgrid-card:hover { transform:translateY(-6px);box-shadow:0 10px 28px rgba(212,134,10,.18); }
+.bgrid-card img { width:50px;height:72px;object-fit:contain; }
+.bgrid-card__name    { font-family:var(--ff-mono);font-size:.7rem;font-weight:500;line-height:1.3; }
+.bgrid-card__brewery { font-family:var(--ff-mono);font-size:.6rem;color:var(--ink3); }
+.bgrid-card__meta    { display:flex;gap:8px;align-items:center; }
+.bgrid-card__rating  { font-family:var(--ff-mono);font-size:.68rem;color:var(--amber); }
+.bgrid-card__abv     { font-family:var(--ff-mono);font-size:.62rem;color:var(--ink3); }
+
+@keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+  <div id="nav-placeholder" data-page="cervejas.html"></div>
+
+  <!-- hero -->
+  <section class="page-hero">
+    <div class="container">
+      <p class="t-label" style="color:var(--amber3);margin-bottom:10px">🍺 Catálogo</p>
+      <h1>Cervejas artesanais<br>do Brasil</h1>
+      <p>IPAs lupuladas, Sours tropicais, Stouts imperiais e muito mais — todo o universo craft brasileiro catalogado.</p>
+      <div class="hero-search">
+        <input type="text" placeholder="Buscar cerveja, cervejaria, estilo..." id="heroSearch">
+        <button onclick="doSearch()">Buscar</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- styles -->
+  <section class="styles-section">
+    <div class="container">
+      <div class="section-header"><h2>Explorar por estilo</h2><a href="estilos.html">Ver todos os estilos →</a></div>
+      <div class="styles-grid" id="stylesGrid">
+        ${Array(12).fill(0).map(()=>`<div class="skeleton" style="height:96px;border-radius:14px"></div>`).join('')}
+      </div>
+    </div>
+  </section>
+
+  <!-- filter bar -->
+  <div class="filter-bar">
+    <div class="container">
+      <div class="filter-bar__inner">
+        <button class="fb-chip active" data-sort="rating">Top Avaliadas</button>
+        <button class="fb-chip" data-sort="checkins">Mais Check-ins</button>
+        <button class="fb-chip" data-sort="name">A–Z</button>
+        <select class="fb-sel" id="stateFilter">
+          <option value="">Todos os estados</option>
+          <option value="SP">São Paulo</option>
+          <option value="SC">Santa Catarina</option>
+          <option value="RS">Rio Grande do Sul</option>
+          <option value="MG">Minas Gerais</option>
+          <option value="PR">Paraná</option>
+        </select>
+        <span class="fb-count" id="fbCount">— cervejas</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- regions -->
+  <section class="regions-section">
+    <div class="container">
+      <div class="section-header"><h2>Destaques por região</h2></div>
+      <div class="regions-scroll" id="regionsScroll">
+        ${Array(5).fill(0).map(()=>`<div class="skeleton" style="flex:0 0 220px;height:220px;border-radius:14px"></div>`).join('')}
+      </div>
+    </div>
+  </section>
+
+  <!-- grid -->
+  <section class="beers-section">
+    <div class="container">
+      <div class="section-header"><h2 id="gridTitle">Catálogo completo</h2></div>
+      <div class="beers-grid" id="beersGrid">
+        ${Array(24).fill(0).map(()=>`<div class="skeleton" style="height:170px;border-radius:14px"></div>`).join('')}
+      </div>
+      <div style="text-align:center;padding:40px 0 64px" id="loadMoreWrap">
+        <button class="btn btn--outline" onclick="loadMore()">Carregar mais</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="footer-placeholder"></div>
+
+  <script src="../js/shared.js"></script>
+  <script>
+  // ── State
+  let currentPage = 0;
+  const PAGE_SIZE = 24;
+  let activeStyle = null;
+  let activeSort = 'rating';
+  let activeState = '';
+  let searchQ = '';
+
+  const STYLE_CHIPS = [
+    {name:'IPA', emoji:'🌿', bg:'linear-gradient(135deg,#D4860A,#FBBF24)'},
+    {name:'Sour', emoji:'🍋', bg:'linear-gradient(135deg,#C0392B,#E74C3C)'},
+    {name:'Stout', emoji:'🖤', bg:'linear-gradient(135deg,#2C1810,#4A3728)'},
+    {name:'Weiss', emoji:'🌾', bg:'linear-gradient(135deg,#B8860B,#F0A020)'},
+    {name:'Lager', emoji:'🍺', bg:'linear-gradient(135deg,#C8A000,#DAA520)'},
+    {name:'Farmhouse', emoji:'🌻', bg:'linear-gradient(135deg,#4A6741,#6B8F5F)'},
+    {name:'Porter', emoji:'☕', bg:'linear-gradient(135deg,#3D2314,#6B4226)'},
+    {name:'Barleywine', emoji:'🍯', bg:'linear-gradient(135deg,#6B2D0F,#A0522D)'},
+    {name:'German', emoji:'🥨', bg:'linear-gradient(135deg,#8B6914,#B8860B)'},
+    {name:'Pilsner', emoji:'🌙', bg:'linear-gradient(135deg,#A89000,#D4B800)'},
+    {name:'Witbier', emoji:'☁️', bg:'linear-gradient(135deg,#9A8050,#C8B470)'},
+    {name:'Outros', emoji:'✨', bg:'linear-gradient(135deg,#5A5A5A,#8A8A8A)'},
+  ];
+
+  // ── init styles from beer_styles table
+  async function loadStyles() {
+    const data = await db.styles.all(20);
+    const styleMap = {};
+    (data||[]).forEach(s => { styleMap[s.name] = s.beers_count; });
+    document.getElementById('stylesGrid').innerHTML = STYLE_CHIPS.map(s => `
+      <div class="style-chip" style="background:${s.bg}" onclick="filterStyle('${s.name}',this)">
+        <span class="style-chip__emoji">${s.emoji}</span>
+        <span class="style-chip__name">${s.name}</span>
+        <span class="style-chip__count">${fmtN(styleMap[s.name]||0)} cervejas</span>
+      </div>
+    `).join('');
+  }
+
+  // ── build params
+  function buildParams(offset=0) {
+    const parts = [`select=id,slug,name,style,category,abv,avg_rating,checkin_count,logo_url,brewery_id`];
+    if (activeStyle && activeStyle !== 'Outros') parts.push(`style=ilike.*${encodeURIComponent(activeStyle)}*`);
+    if (searchQ) parts.push(`name=ilike.*${encodeURIComponent(searchQ)}*`);
+    if (activeSort==='rating')   parts.push(`avg_rating=gt.0&order=avg_rating.desc`);
+    if (activeSort==='checkins') parts.push(`checkin_count=gt.0&order=checkin_count.desc`);
+    if (activeSort==='name')     parts.push(`order=name.asc`);
+    parts.push(`limit=${PAGE_SIZE}&offset=${offset}`);
+    return '?' + parts.join('&');
+  }
+
+  async function loadBeers(append=false) {
+    if (!append) {
+      currentPage = 0;
+      document.getElementById('beersGrid').innerHTML = Array(8).fill(0).map(()=>`<div class="skeleton" style="height:170px;border-radius:14px"></div>`).join('');
+    }
+    const params = buildParams(currentPage * PAGE_SIZE);
+    const data = await db.beers.list(params);
+    if (!data) return;
+
+    document.getElementById('fbCount').textContent = `${data.length < PAGE_SIZE && currentPage===0 ? data.length : (currentPage+1)*PAGE_SIZE+'+' } cervejas`;
+    const html = data.map(b => `
+      <a href="cerveja.html?slug=${b.slug}" class="bgrid-card">
+        <img src="${beerImg(b)}" alt="${b.name}" onerror="this.src='${canSVG(b.name,b.style||b.category)}'">
+        <span class="bgrid-card__name">${b.name}</span>
+        <span class="bgrid-card__brewery">${b.category||b.style||''}</span>
+        <div class="bgrid-card__meta">
+          ${b.avg_rating?`<span class="bgrid-card__rating">${Number(b.avg_rating).toFixed(1)} ★</span>`:''}
+          ${b.abv?`<span class="bgrid-card__abv">${b.abv}%</span>`:''}
+        </div>
+      </a>`).join('');
+
+    if (append) document.getElementById('beersGrid').innerHTML += html;
+    else document.getElementById('beersGrid').innerHTML = html;
+
+    document.getElementById('loadMoreWrap').style.display = data.length < PAGE_SIZE ? 'none' : 'block';
+  }
+
+  function loadMore() { currentPage++; loadBeers(true); }
+
+  // ── style filter
+  function filterStyle(name, el) {
+    document.querySelectorAll('.style-chip').forEach(c=>c.classList.remove('active'));
+    if (activeStyle===name) {
+      activeStyle=null;
+      document.getElementById('gridTitle').textContent='Catálogo completo';
+    } else {
+      activeStyle=name; el.classList.add('active');
+      document.getElementById('gridTitle').textContent=`Cervejas · ${name}`;
+    }
+    loadBeers();
+  }
+
+  // ── sort chips
+  document.querySelectorAll('.fb-chip').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.fb-chip').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      activeSort=btn.dataset.sort;
+      loadBeers();
+    });
+  });
+  document.getElementById('stateFilter').addEventListener('change', e=>{
+    activeState=e.target.value; loadBeers();
+  });
+
+  // ── search
+  let st;
+  document.getElementById('heroSearch').addEventListener('input', e=>{ clearTimeout(st); st=setTimeout(()=>{ searchQ=e.target.value.trim(); loadBeers(); },350); });
+  function doSearch() { searchQ=document.getElementById('heroSearch').value.trim(); loadBeers(); }
+
+  // ── regions
+  async function loadRegions() {
+    const REGIONS = [
+      {state:'SP',name:'São Paulo',emoji:'🏙️'},
+      {state:'SC',name:'Santa Catarina',emoji:'🌿'},
+      {state:'RS',name:'Rio Grande do Sul',emoji:'🍷'},
+      {state:'MG',name:'Minas Gerais',emoji:'⛏️'},
+      {state:'PR',name:'Paraná',emoji:'🌲'},
+    ];
+    const results = await Promise.all(
+      REGIONS.map(r=>sbFetch('beers',`?select=id,slug,name,style,avg_rating,logo_url,breweries!inner(state)&breweries.state=eq.${r.state}&avg_rating=gt.0&limit=4&order=avg_rating.desc`))
+    );
+    document.getElementById('regionsScroll').innerHTML = REGIONS.map((r,i)=>{
+      const beers = results[i]||[];
+      if (!beers.length) return '';
+      return `<div class="region-block">
+        <div class="region-block__header">
+          <p class="region-block__title">${r.emoji} ${r.name}</p>
+          <p class="region-block__sub">${r.state} · destaques</p>
+        </div>
+        <div class="region-block__beers">
+          ${beers.map(b=>`
+            <a href="cerveja.html?slug=${b.slug}" class="rbeer-row">
+              <img src="${beerImg(b)}" alt="${b.name}" onerror="this.src='${canSVG(b.name,b.style)}'">
+              <span class="rbeer-row__name">${b.name}</span>
+              ${b.avg_rating?`<span class="rbeer-row__r">${Number(b.avg_rating).toFixed(1)} ★</span>`:''}
+            </a>`).join('')}
+        </div>
+      </div>`;
+    }).filter(Boolean).join('');
+  }
+
+  // ── boot
+  loadStyles();
+  loadBeers();
+  loadRegions();
+  </script>
+</body>
+</html>

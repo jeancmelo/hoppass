@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Cerveja — HopPass</title>
+  <link rel="stylesheet" href="../css/design-system.css">
+  <style>
+/* hero */
+.beer-hero { background:var(--ink);padding:56px 0 0;position:relative;overflow:hidden; }
+.beer-hero::before { content:'';position:absolute;inset:0; }
+.beer-hero__inner { display:grid;grid-template-columns:1fr 300px;gap:56px;align-items:center;position:relative;z-index:1; }
+.beer-hero__back { font-family:var(--ff-mono);font-size:.7rem;color:rgba(245,240,232,.45);margin-bottom:18px; }
+.beer-hero__back a { color:var(--amber3); }
+.beer-hero__name { font-family:var(--ff-display);font-size:2.8rem;font-weight:700;color:var(--paper);line-height:1.06;margin-bottom:8px; }
+.beer-hero__brewery { font-family:var(--ff-mono);font-size:.78rem;color:rgba(245,240,232,.5);margin-bottom:18px; }
+.beer-hero__brewery a { color:var(--amber3); }
+.beer-hero__desc { font-size:.95rem;color:rgba(245,240,232,.62);line-height:1.7;max-width:480px;margin-bottom:26px; }
+.beer-hero__actions { display:flex;gap:12px;flex-wrap:wrap; }
+/* can */
+.beer-hero__can-wrap { display:flex;align-items:center;justify-content:center;height:260px;position:relative; }
+.beer-hero__can-halo { position:absolute;inset:0;border-radius:50%;filter:blur(40px);opacity:.4; }
+.beer-hero__can-img { width:110px;height:160px;object-fit:contain;filter:drop-shadow(0 16px 32px rgba(0,0,0,.5));animation:float 4s ease-in-out infinite;position:relative;z-index:1; }
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+/* bottom strip */
+.beer-hero__bottom { border-top:1px solid rgba(245,240,232,.08);margin-top:36px; }
+
+/* specs */
+.specs-bar { background:var(--paper2);border-bottom:2px solid var(--paper3); }
+.specs-bar__inner { display:flex;border-left:1px solid var(--paper3); }
+.spec { flex:1;text-align:center;padding:18px 12px;border-right:1px solid var(--paper3); }
+.spec .n { font-family:var(--ff-display);font-size:1.35rem;font-weight:700;color:var(--amber);display:block; }
+.spec .l { font-family:var(--ff-mono);font-size:.6rem;color:var(--ink3);text-transform:uppercase;letter-spacing:.08em; }
+
+/* content */
+.beer-content { padding:56px 0; }
+.beer-grid { display:grid;grid-template-columns:1fr 360px;gap:48px;align-items:start; }
+
+/* flavor */
+.section-title { font-family:var(--ff-display);font-size:1.5rem;margin-bottom:22px; }
+
+/* glass + temp */
+.glass-temp { display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:32px; }
+.gt-card { background:var(--foam);border:1px solid var(--paper3);border-radius:var(--radius-lg);padding:22px;text-align:center; }
+.gt-card h4 { font-family:var(--ff-mono);font-size:.63rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);margin-bottom:14px; }
+/* glass SVG */
+.glass-name { font-family:var(--ff-display);font-size:.98rem;font-weight:600;margin-top:10px; }
+/* thermometer */
+.therm-wrap { display:flex;flex-direction:column;align-items:center;gap:6px; }
+.therm { width:26px;height:130px;position:relative;display:flex;flex-direction:column;align-items:center; }
+.therm-tube { width:12px;flex:1;background:var(--paper3);border-radius:6px;position:relative;overflow:hidden;border:2px solid var(--paper2); }
+.therm-fill { position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,#3A80D0,#7BB8F0);border-radius:0 0 4px 4px; }
+.therm-bulb { width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#3A80D0,#7BB8F0);border:2px solid var(--paper2);flex-shrink:0;margin-top:-3px; }
+.temp-val { font-family:var(--ff-display);font-size:1.25rem;font-weight:700;color:#3A80D0; }
+.temp-lbl { font-family:var(--ff-mono);font-size:.63rem;color:var(--ink3); }
+
+/* food pairings */
+.food-section { margin-top:40px; }
+.food-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px; }
+.food-card { background:var(--foam);border:1px solid var(--paper3);border-radius:var(--radius-lg);padding:16px;text-align:center;transition:transform .2s,box-shadow .2s; }
+.food-card:hover { transform:translateY(-3px);box-shadow:var(--shadow); }
+.food-card__emoji { font-size:2rem;display:block;margin-bottom:8px; }
+.food-card__name  { font-family:var(--ff-mono);font-size:.72rem;font-weight:500;margin-bottom:4px; }
+.food-card__note  { font-size:.78rem;color:var(--ink3);line-height:1.4; }
+
+/* brewery block */
+.brewery-block { margin-top:40px;background:var(--ink);border-radius:var(--radius-lg);padding:28px;display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center; }
+.brewery-block__logo { width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--ff-display);font-size:1.3rem;font-weight:700;color:white;background-size:cover; }
+.brewery-block__name { font-family:var(--ff-display);font-size:1.15rem;font-weight:600;color:var(--paper);margin-bottom:3px; }
+.brewery-block__loc  { font-family:var(--ff-mono);font-size:.7rem;color:rgba(245,240,232,.45); }
+.brewery-block__tags { display:flex;gap:6px;flex-wrap:wrap;margin-top:8px; }
+.brewery-block__desc { font-size:.85rem;color:rgba(245,240,232,.58);line-height:1.6;margin-top:10px; }
+
+/* sidebar */
+.rating-box { background:var(--foam);border:1px solid var(--paper3);border-radius:var(--radius-lg);padding:24px; }
+.rating-big  { text-align:center;margin-bottom:18px; }
+.rating-big .n { font-family:var(--ff-display);font-size:3.2rem;font-weight:700;color:var(--amber);display:block;line-height:1; }
+.rating-big .s { font-size:1.1rem;margin:5px 0; }
+.rating-big .c { font-family:var(--ff-mono);font-size:.65rem;color:var(--ink3); }
+.rdist { display:flex;flex-direction:column;gap:5px; }
+.rdist-row { display:flex;align-items:center;gap:8px; }
+.rdist-row .lbl { font-family:var(--ff-mono);font-size:.62rem;color:var(--ink3);width:22px;text-align:right; }
+.rdist-row .bar { flex:1;height:5px;background:var(--paper3);border-radius:3px;overflow:hidden; }
+.rdist-row .fill { height:100%;background:var(--amber);border-radius:3px; }
+.rdist-row .cnt  { font-family:var(--ff-mono);font-size:.6rem;color:var(--ink3);width:28px; }
+
+/* similar shelf */
+.similar-section { padding:56px 0;background:var(--paper2); }
+
+@keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+  <div id="nav-placeholder" data-page="cervejas.html"></div>
+  <div id="beerPage">
+    <div style="display:flex;align-items:center;justify-content:center;height:60vh;gap:12px;color:var(--ink3);font-family:var(--ff-mono);font-size:.8rem">
+      <div style="width:20px;height:20px;border:2px solid var(--paper3);border-top-color:var(--amber);border-radius:50%;animation:spin .8s linear infinite"></div>
+      A carregar cerveja...
+    </div>
+  </div>
+  <div id="footer-placeholder"></div>
+
+  <script src="../js/shared.js"></script>
+  <script>
+  const slug = new URLSearchParams(location.search).get('slug');
+
+  // glass type → SVG
+  function glassSVG(type) {
+    // Simplified SVG shapes
+    const glasses = {
+      'Pint': `<svg width="72" height="100" viewBox="0 0 72 100"><path d="M18,10 L14,85 Q14,94 36,94 Q58,94 58,85 L54,10 Z" fill="rgba(212,134,10,.2)" stroke="#D4860A" stroke-width="1.5"/><path d="M20,50 L15.5,85 Q15.5,92 36,92 Q56.5,92 56.5,85 L52,50 Z" fill="rgba(212,134,10,.4)"/><ellipse cx="36" cy="50" rx="16" ry="4.5" fill="rgba(255,248,238,.75)"/><line x1="24" y1="16" x2="20" y2="82" stroke="rgba(255,255,255,.2)" stroke-width="2.5" stroke-linecap="round"/></svg>`,
+      'Tulipa': `<svg width="72" height="100" viewBox="0 0 72 100"><path d="M20,10 Q10,35 14,55 Q16,70 22,80 Q22,94 36,94 Q50,94 50,80 Q56,70 58,55 Q62,35 52,10 Z" fill="rgba(192,57,43,.2)" stroke="#C0392B" stroke-width="1.5"/><path d="M21,52 Q17,65 22,78 Q22,92 36,92 Q50,92 50,78 Q55,65 51,52 Z" fill="rgba(192,57,43,.4)"/><ellipse cx="36" cy="52" rx="15" ry="4" fill="rgba(255,248,238,.75)"/></svg>`,
+      'Weizen': `<svg width="72" height="110" viewBox="0 0 72 110"><path d="M22,8 L16,95 Q16,104 36,104 Q56,104 56,95 L50,8 Z" fill="rgba(184,134,11,.2)" stroke="#B8860B" stroke-width="1.5"/><path d="M24,55 L17.5,95 Q17.5,102 36,102 Q54.5,102 54.5,95 L48,55 Z" fill="rgba(184,134,11,.4)"/><ellipse cx="36" cy="55" rx="12" ry="4" fill="rgba(255,248,238,.75)"/></svg>`,
+      'Snifter': `<svg width="72" height="100" viewBox="0 0 72 100"><path d="M16,10 Q8,30 22,55 Q26,70 36,72 Q46,70 50,55 Q64,30 56,10 Z" fill="rgba(107,45,15,.2)" stroke="#6B2D0F" stroke-width="1.5"/><path d="M20,40 Q15,55 22,62 Q26,70 36,71 Q46,70 50,62 Q57,55 52,40 Z" fill="rgba(107,45,15,.4)"/><ellipse cx="36" cy="40" rx="16" ry="4" fill="rgba(255,248,238,.7)"/><rect x="33" y="72" width="6" height="22" rx="3" fill="#6B2D0F" opacity=".5"/><rect x="26" y="92" width="20" height="4" rx="2" fill="#6B2D0F" opacity=".4"/></svg>`,
+    };
+    return glasses[type] || glasses['Pint'];
+  }
+
+  const FOOD_EMOJIS = ['🥩','🍕','🍣','🧀','🥗','🍖','🐟','🥐','🍫','🌶️','🦐','🥓'];
+
+  async function load() {
+    if (!slug) return;
+    const data = await db.beers.bySlug(slug);
+    const beer = data?.[0];
+    if (!beer) { document.getElementById('beerPage').innerHTML = `<div style="padding:80px;text-align:center;color:var(--ink3);font-family:var(--ff-mono)">Cerveja não encontrada.</div>`; return; }
+    document.title = `${beer.name} — HopPass`;
+
+    const brewery = beer.breweries;
+    const [c1,c2] = styleColors(beer.style||beer.category||'');
+    const beerImgSrc = beerImg(beer);
+    const pct = v => v ? Math.round((v/5)*100)+'%' : '0%';
+
+    // food pairings - from DB or fallback
+    let pairings = [];
+    if (beer.food_pairings) {
+      try { pairings = typeof beer.food_pairings === 'string' ? JSON.parse(beer.food_pairings) : beer.food_pairings; } catch(e){}
+    }
+
+    // serving temp
+    const tMin = beer.serving_temp_min || 4;
+    const tMax = beer.serving_temp_max || 8;
+    const tempFillPct = Math.round(((tMax - 0) / 22) * 100);
+
+    // similar beers
+    const similar = beer.similar_beers?.length
+      ? await sbFetch('beers', `?id=in.(${beer.similar_beers.slice(0,6).join(',')})&select=id,slug,name,style,abv,avg_rating,logo_url`)
+      : await db.beers.byStyle(beer.style||'', 6);
+
+    const html = `
+    <!-- HERO -->
+    <section class="beer-hero" style="background:radial-gradient(ellipse at 75% 40%,${c1}22 0%,transparent 55%),var(--ink)">
+      <div class="container">
+        <div class="beer-hero__inner">
+          <div>
+            <p class="beer-hero__back"><a href="cervejas.html">← Cervejas</a> / ${beer.style||beer.category||''}</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+              ${beer.style?`<span class="tag" style="background:${c1}22;color:${c1}">${beer.style}</span>`:''}
+              ${beer.abv?`<span class="tag" style="background:rgba(245,240,232,.1);color:rgba(245,240,232,.65)">${beer.abv}% ABV</span>`:''}
+              ${beer.ibu?`<span class="tag" style="background:rgba(245,240,232,.1);color:rgba(245,240,232,.65)">IBU ${beer.ibu}</span>`:''}
+              ${beer.is_seasonal?`<span class="tag tag--amber">Sazonal</span>`:''}
+            </div>
+            <h1 class="beer-hero__name">${beer.name}</h1>
+            <p class="beer-hero__brewery">por <a href="cervejaria.html?slug=${brewery?.slug||''}">${brewery?.name||'—'}</a>${brewery?.city?` · ${brewery.city}, ${brewery.state}`:''}</p>
+            ${beer.tasting_note||beer.description?`<p class="beer-hero__desc">${beer.tasting_note||beer.description}</p>`:''}
+            <div class="beer-hero__actions">
+              <a href="#" class="btn btn--amber">Fazer Check-in</a>
+              <a href="#" class="btn btn--ghost btn--sm">+ Wishlist</a>
+            </div>
+          </div>
+          <div class="beer-hero__can-wrap">
+            <div class="beer-hero__can-halo" style="background:${c1}"></div>
+            <img id="heroCan" class="beer-hero__can-img" src="${beerImgSrc}" alt="${beer.name}" onerror="this.src='${canSVG(beer.name,beer.style)}'">
+          </div>
+        </div>
+        <div class="beer-hero__bottom"></div>
+      </div>
+    </section>
+
+    <!-- SPECS BAR -->
+    <div class="specs-bar">
+      <div class="container" style="padding:0">
+        <div class="specs-bar__inner">
+          ${beer.abv?`<div class="spec"><span class="n">${beer.abv}%</span><span class="l">ABV</span></div>`:''}
+          ${beer.ibu?`<div class="spec"><span class="n">${beer.ibu}</span><span class="l">IBU</span></div>`:''}
+          ${beer.avg_rating?`<div class="spec"><span class="n">${Number(beer.avg_rating).toFixed(1)}</span><span class="l">Rating</span></div>`:''}
+          ${beer.checkin_count?`<div class="spec"><span class="n">${fmtN(beer.checkin_count)}</span><span class="l">Check-ins</span></div>`:''}
+          ${beer.color?`<div class="spec"><span class="n">${beer.color}</span><span class="l">Cor</span></div>`:''}
+          ${beer.category?`<div class="spec"><span class="n" style="font-size:.85rem">${beer.category}</span><span class="l">Categoria</span></div>`:''}
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <section class="beer-content">
+      <div class="container">
+        <div class="beer-grid">
+          <div>
+            <!-- Flavor profile -->
+            <h2 class="section-title">Perfil de sabores</h2>
+            ${[
+              ['Amargor','bitterness'],['Corpo','body'],['Dulçor','sweetness'],
+              ['Frutado','fruitiness'],['Torrado','roastiness']
+            ].filter(([,k])=>beer[k]).map(([l,k])=>`
+              <div class="flavor-bar">
+                <div class="flavor-bar__header"><span class="flavor-bar__label">${l}</span><span class="flavor-bar__val">${beer[k]} / 5</span></div>
+                <div class="flavor-bar__track"><div class="flavor-bar__fill" style="width:${pct(beer[k])}"></div></div>
+              </div>
+            `).join('') || '<p style="color:var(--ink3);font-family:var(--ff-mono);font-size:.8rem">Perfil de sabores não disponível.</p>'}
+
+            ${beer.flavor_tags?.length?`
+              <div style="margin-top:18px">
+                <p class="t-label mb-8">Notas aromáticas</p>
+                <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px">
+                  ${beer.flavor_tags.map(t=>`<span class="tag tag--amber">${t}</span>`).join('')}
+                </div>
+              </div>`:''
+            }
+
+            ${beer.hops?.length?`
+              <div style="margin-top:14px">
+                <p class="t-label mb-8">Lúpulos</p>
+                <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px">
+                  ${beer.hops.map(h=>`<span class="tag tag--hop">${h}</span>`).join('')}
+                </div>
+              </div>`:''
+            }
+
+            <!-- Glass + Temp -->
+            <div class="glass-temp">
+              <div class="gt-card">
+                <h4>Copo ideal</h4>
+                ${glassSVG(beer.glass_type||'Pint')}
+                <p class="glass-name">${beer.glass_type||'Pint'}</p>
+              </div>
+              <div class="gt-card">
+                <h4>Temperatura</h4>
+                <div class="therm-wrap">
+                  <div class="therm">
+                    <div class="therm-tube"><div class="therm-fill" style="height:${tempFillPct}%"></div></div>
+                    <div class="therm-bulb"></div>
+                  </div>
+                  <span class="temp-val">${tMin}–${tMax}°C</span>
+                  <span class="temp-lbl">${tMax<=6?'Muito gelada':tMax<=10?'Gelada':'Fresca'}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Food pairings -->
+            ${pairings.length?`
+              <div class="food-section">
+                <h2 class="section-title">Harmonização</h2>
+                <div class="food-grid">
+                  ${pairings.map((p,i)=>{
+                    const name = typeof p==='string' ? p : p.name||p;
+                    const note = typeof p==='object' ? (p.note||p.description||'') : '';
+                    const emoji = FOOD_EMOJIS[i%FOOD_EMOJIS.length];
+                    return `<div class="food-card">
+                      <span class="food-card__emoji">${emoji}</span>
+                      <p class="food-card__name">${name}</p>
+                      ${note?`<p class="food-card__note">${note}</p>`:''}
+                    </div>`;
+                  }).join('')}
+                </div>
+              </div>` : ''}
+
+            <!-- Brewery block -->
+            ${brewery?`
+              <div class="brewery-block">
+                <div class="brewery-block__logo" style="${brewery.logo_url?`background-image:url('${brewery.logo_url}')`:``}background:linear-gradient(135deg,${c1},${c2})">${brewery.logo_url?'':breweryInitials(brewery.name)}</div>
+                <div>
+                  <p class="brewery-block__name">${brewery.name}</p>
+                  <p class="brewery-block__loc">📍 ${brewery.city||''}, ${brewery.state||''}</p>
+                  ${brewery.identity_tags?.length?`<div class="brewery-block__tags">${brewery.identity_tags.slice(0,4).map(t=>`<span class="tag tag--amber" style="font-size:.6rem">${t}</span>`).join('')}</div>`:''}
+                  <div style="margin-top:12px"><a href="cervejaria.html?slug=${brewery.slug}" class="btn btn--amber btn--sm">Ver cervejaria →</a></div>
+                </div>
+              </div>`:''
+            }
+          </div>
+
+          <!-- Sidebar -->
+          <div>
+            <!-- Rating -->
+            <div class="rating-box">
+              <div class="rating-big">
+                <span class="n">${beer.avg_rating?Number(beer.avg_rating).toFixed(1):'—'}</span>
+                <div class="s">${stars(Number(beer.avg_rating)||0)}</div>
+                <span class="c">${fmtN(beer.checkin_count)} avaliações</span>
+              </div>
+              ${beer.avg_rating?`<div class="rdist">
+                ${[5,4,3,2,1].map(s=>{
+                  const pct = s===5?65:s===4?22:s===3?8:s===2?3:2;
+                  return `<div class="rdist-row"><span class="lbl">${s}★</span><div class="bar"><div class="fill" style="width:${pct}%"></div></div><span class="cnt">${Math.round((beer.checkin_count||0)*pct/100)}</span></div>`;
+                }).join('')}
+              </div>`:''}
+              <a href="#" class="btn btn--amber w-full mt-16" style="justify-content:center;display:flex;margin-top:16px">Avaliar esta cerveja</a>
+            </div>
+
+            <!-- Similar -->
+            ${similar?.length?`
+              <div style="margin-top:24px">
+                <p class="t-label mb-16">Cervejas similares</p>
+                <div style="display:flex;flex-direction:column;gap:10px">
+                  ${similar.filter(s=>s.id!==beer.id).slice(0,4).map(s=>`
+                    <a href="cerveja.html?slug=${s.slug}" style="display:flex;gap:12px;align-items:center;background:var(--foam);border:1px solid var(--paper3);border-radius:var(--radius-lg);padding:12px;text-decoration:none;color:inherit;transition:transform .15s">
+                      <img src="${beerImg(s)}" alt="${s.name}" width="28" height="40" style="flex-shrink:0;object-fit:contain" onerror="this.src='${canSVG(s.name,s.style)}'">
+                      <div style="flex:1;min-width:0">
+                        <p style="font-family:var(--ff-mono);font-size:.72rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.name}</p>
+                        <p style="font-family:var(--ff-mono);font-size:.62rem;color:var(--ink3)">${s.style||''}</p>
+                      </div>
+                      ${s.avg_rating?`<span style="font-family:var(--ff-mono);font-size:.7rem;color:var(--amber)">${Number(s.avg_rating).toFixed(1)} ★</span>`:''}
+                    </a>`).join('')}
+                </div>
+              </div>`:''}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Similar shelf -->
+    ${similar?.length?`
+      <section class="similar-section">
+        <div class="container">
+          <div class="section-header"><h2>Mais ${beer.style||beer.category||'cervejas'}</h2><a href="cervejas.html?style=${encodeURIComponent(beer.style||'')}">Ver todas →</a></div>
+          <div class="shelf">
+            ${similar.filter(s=>s.id!==beer.id).map(s=>`
+              <a href="cerveja.html?slug=${s.slug}" class="can-card">
+                <img src="${beerImg(s)}" alt="${s.name}" class="can-card__img" onerror="this.src='${canSVG(s.name,s.style)}'">
+                <span class="can-card__name">${s.name}</span>
+                <span class="can-card__style">${s.style||''}</span>
+                ${s.avg_rating?`<span class="can-card__rating">${Number(s.avg_rating).toFixed(1)} ★</span>`:''}
+              </a>`).join('')}
+          </div>
+        </div>
+      </section>`:''}
+    `;
+
+    document.getElementById('beerPage').innerHTML = html;
+  }
+
+  load();
+  </script>
+</body>
+</html>

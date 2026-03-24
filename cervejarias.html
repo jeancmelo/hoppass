@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Cervejarias — HopPass</title>
+  <link rel="stylesheet" href="../css/design-system.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+.page-hero { background:var(--ink);padding:48px 0 36px;position:relative;overflow:hidden; }
+.page-hero::before { content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 70% 50%,rgba(212,134,10,.14) 0%,transparent 60%); }
+.page-hero__inner { position:relative;z-index:1;display:grid;grid-template-columns:1fr auto;gap:48px;align-items:center; }
+.page-hero h1 { font-family:var(--ff-display);font-size:2.6rem;font-weight:700;color:var(--paper);line-height:1.1;margin-bottom:8px; }
+.page-hero p { font-size:.9rem;color:rgba(245,240,232,.55);max-width:480px; }
+.page-hero__stats { display:flex;gap:0; }
+.page-hero__stat { text-align:center;padding:20px 28px;border-left:1px solid rgba(245,240,232,.1); }
+.page-hero__stat .n { font-family:var(--ff-display);font-size:1.8rem;font-weight:700;color:var(--amber3);display:block; }
+.page-hero__stat .l { font-family:var(--ff-mono);font-size:.6rem;color:rgba(245,240,232,.38);text-transform:uppercase; }
+
+/* ── Filter bar ── */
+.filter-bar { background:var(--foam);border-bottom:1px solid var(--paper3);padding:12px 0;position:sticky;top:62px;z-index:100; }
+.filter-bar__inner { display:flex;gap:10px;align-items:center;flex-wrap:wrap; }
+.fb-search { flex:1;min-width:180px;max-width:320px;background:var(--paper);border:1.5px solid var(--paper3);border-radius:100px;padding:9px 18px;font-family:var(--ff-mono);font-size:.78rem;color:var(--ink);outline:none;transition:border-color .2s; }
+.fb-search:focus { border-color:var(--amber); }
+.fb-select { background:var(--paper);border:1.5px solid var(--paper3);border-radius:100px;padding:9px 16px;font-family:var(--ff-mono);font-size:.73rem;color:var(--ink2);outline:none;cursor:pointer;transition:border-color .2s; }
+.fb-select:focus { border-color:var(--amber); }
+.fb-count { margin-left:auto;font-family:var(--ff-mono);font-size:.7rem;color:var(--ink3); }
+
+/* ── Split layout ── */
+.split { display:grid;grid-template-columns:460px 1fr;height:calc(100vh - 130px);min-height:600px; }
+.split__list { overflow-y:auto;padding:20px;background:var(--paper);border-right:1px solid var(--paper3);scrollbar-width:thin;scrollbar-color:var(--paper3) transparent; }
+.split__map { position:sticky;top:130px;height:calc(100vh - 130px); }
+#cervejarias-map { height:100%;width:100%; }
+
+/* ── Brewery card in list ── */
+.bcard { display:flex;gap:14px;background:var(--foam);border:1px solid var(--paper3);border-radius:var(--radius-lg);padding:16px;margin-bottom:10px;cursor:pointer;transition:transform .2s,box-shadow .18s,border-color .2s;text-decoration:none;color:inherit; }
+.bcard:hover,.bcard.active { transform:translateX(3px);box-shadow:var(--shadow);border-color:var(--amber); }
+.bcard__logo { width:48px;height:48px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--ff-display);font-size:1rem;font-weight:700;color:white;background-size:cover;background-position:center; }
+.bcard__body { flex:1;min-width:0; }
+.bcard__name { font-family:var(--ff-mono);font-size:.82rem;font-weight:500;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.bcard__loc  { font-family:var(--ff-mono);font-size:.66rem;color:var(--ink3);margin-bottom:7px; }
+.bcard__tags { display:flex;gap:5px;flex-wrap:wrap; }
+.bcard__tag  { background:rgba(212,134,10,.12);color:var(--amber);border-radius:100px;padding:2px 9px;font-family:var(--ff-mono);font-size:.58rem; }
+.bcard__arrow { font-family:var(--ff-mono);font-size:.63rem;color:var(--amber);align-self:center;flex-shrink:0; }
+
+/* ── popup ── */
+.bp { font-family:'IBM Plex Sans',sans-serif;min-width:200px; }
+.bp h4 { font-family:'Fraunces',serif;font-size:.95rem;color:#1A1208;margin-bottom:4px; }
+.bp .loc { font-size:.73rem;color:#7A6550;margin-bottom:7px; }
+.bp .tags { display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px; }
+.bp .t { background:rgba(212,134,10,.12);color:#D4860A;border-radius:100px;padding:2px 8px;font-size:.62rem;font-family:'DM Mono',monospace; }
+.bp a { font-size:.73rem;color:#D4860A;font-family:'DM Mono',monospace; }
+
+/* load more */
+.load-more-wrap { text-align:center;padding:24px 0; }
+@keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+  <div id="nav-placeholder" data-page="cervejarias.html"></div>
+
+  <!-- hero -->
+  <section class="page-hero">
+    <div class="container">
+      <div class="page-hero__inner">
+        <div>
+          <p class="t-label" style="color:var(--amber3);margin-bottom:10px">🏭 Catálogo</p>
+          <h1>Cervejarias<br>Artesanais do Brasil</h1>
+          <p class="mt-8">De São Paulo à Serra Gaúcha — todas as cervejarias craft do país num só lugar.</p>
+        </div>
+        <div class="page-hero__stats">
+          <div class="page-hero__stat"><span class="n" id="totalBreweries">—</span><span class="l">Cervejarias</span></div>
+          <div class="page-hero__stat"><span class="n">11</span><span class="l">Estados</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- filter bar -->
+  <div class="filter-bar">
+    <div class="container">
+      <div class="filter-bar__inner">
+        <input class="fb-search" type="text" placeholder="Buscar cervejaria..." id="qSearch">
+        <select class="fb-select" id="qState">
+          <option value="">Todos os estados</option>
+          <option value="SP">São Paulo</option>
+          <option value="SC">Santa Catarina</option>
+          <option value="RS">Rio Grande do Sul</option>
+          <option value="MG">Minas Gerais</option>
+          <option value="PR">Paraná</option>
+          <option value="RJ">Rio de Janeiro</option>
+          <option value="PE">Pernambuco</option>
+          <option value="DF">Distrito Federal</option>
+          <option value="BA">Bahia</option>
+          <option value="GO">Goiás</option>
+          <option value="CE">Ceará</option>
+        </select>
+        <select class="fb-select" id="qType">
+          <option value="">Todos os tipos</option>
+          <option value="taproom">Com taproom</option>
+        </select>
+        <span class="fb-count" id="fbCount">— cervejarias</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- split -->
+  <div class="split">
+    <div class="split__list" id="breweryList">
+      <div style="display:flex;align-items:center;justify-content:center;height:100px;gap:12px;color:var(--ink3);font-family:var(--ff-mono);font-size:.78rem">
+        <div style="width:18px;height:18px;border:2px solid var(--paper3);border-top-color:var(--amber);border-radius:50%;animation:spin .8s linear infinite"></div>
+        A carregar cervejarias...
+      </div>
+    </div>
+    <div class="split__map"><div id="cervejarias-map"></div></div>
+  </div>
+
+  <div id="footer-placeholder"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="../js/shared.js"></script>
+  <script>
+  // ── state
+  let allBreweries = [];
+  let markers = {};
+  let map;
+
+  // ── init map
+  function initMap() {
+    map = L.map('cervejarias-map', { center:[-21,-48], zoom:5 });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution:'© OpenStreetMap', maxZoom:18
+    }).addTo(map);
+  }
+
+  // ── render list
+  function renderList(data) {
+    document.getElementById('fbCount').textContent = `${data.length} cervejarias`;
+    if (!data.length) {
+      document.getElementById('breweryList').innerHTML = `<div style="padding:40px;text-align:center;color:var(--ink3);font-family:var(--ff-mono);font-size:.8rem">Nenhuma cervejaria encontrada.</div>`;
+      return;
+    }
+    document.getElementById('breweryList').innerHTML = data.map(b => {
+      const [c1] = styleColors((b.identity_tags||[])[0]||'');
+      const logoBg = b.logo_url ? `background-image:url('${b.logo_url}');background-color:${c1}` : `background:linear-gradient(135deg,${c1},${styleColors((b.identity_tags||[])[0]||'')[1]})`;
+      const tags = (b.identity_tags||[]).slice(0,3);
+      return `<a href="cervejaria.html?slug=${b.slug}" class="bcard" data-id="${b.id}" onmouseenter="highlightMarker('${b.id}')">
+        <div class="bcard__logo" style="${logoBg}">${b.logo_url?'':breweryInitials(b.name)}</div>
+        <div class="bcard__body">
+          <p class="bcard__name">${b.name}</p>
+          <p class="bcard__loc">📍 ${b.city||''}, ${b.state||''}</p>
+          ${tags.length ? `<div class="bcard__tags">${tags.map(t=>`<span class="bcard__tag">${t}</span>`).join('')}</div>` : ''}
+        </div>
+        <span class="bcard__arrow">Ver →</span>
+      </a>`;
+    }).join('');
+  }
+
+  // ── render markers
+  function renderMarkers(data) {
+    Object.values(markers).forEach(m => map.removeLayer(m));
+    markers = {};
+    data.forEach(b => {
+      if (!b.latitude || !b.longitude) return;
+      const m = L.marker([b.latitude, b.longitude], { icon: dotMarker(L,12) })
+        .addTo(map)
+        .bindPopup(`<div class="bp">
+          <h4>${b.name}</h4>
+          <p class="loc">📍 ${b.city||''}, ${b.state||''}</p>
+          ${(b.identity_tags||[]).length ? `<div class="tags">${b.identity_tags.slice(0,3).map(t=>`<span class="t">${t}</span>`).join('')}</div>` : ''}
+          <a href="cervejaria.html?slug=${b.slug}">Ver cervejaria →</a>
+        </div>`);
+      m.on('click', () => {
+        const card = document.querySelector(`.bcard[data-id="${b.id}"]`);
+        if (card) { document.querySelectorAll('.bcard').forEach(c=>c.classList.remove('active')); card.classList.add('active'); card.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+      });
+      markers[b.id] = m;
+    });
+  }
+
+  function highlightMarker(id) {
+    const m = markers[id];
+    if (m) { m.openPopup(); }
+  }
+
+  // ── filters
+  let searchTimer;
+  function applyFilters() {
+    const q = document.getElementById('qSearch').value.toLowerCase();
+    const state = document.getElementById('qState').value;
+    const type = document.getElementById('qType').value;
+    const filtered = allBreweries.filter(b => {
+      const mq = !q || b.name.toLowerCase().includes(q) || (b.city||'').toLowerCase().includes(q);
+      const ms = !state || b.state === state;
+      const mt = !type || (type === 'taproom' && b.has_taproom);
+      return mq && ms && mt;
+    });
+    renderList(filtered);
+    renderMarkers(filtered);
+    if (filtered.length && filtered[0].latitude) {
+      const bounds = filtered.filter(b=>b.latitude).map(b=>[b.latitude,b.longitude]);
+      if (bounds.length) map.fitBounds(bounds, { padding:[40,40], maxZoom:12 });
+    }
+  }
+
+  document.getElementById('qSearch').addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(applyFilters, 300); });
+  document.getElementById('qState').addEventListener('change', applyFilters);
+  document.getElementById('qType').addEventListener('change', applyFilters);
+
+  // ── check URL param
+  const urlState = new URLSearchParams(location.search).get('state');
+  if (urlState) { document.getElementById('qState').value = urlState; }
+
+  // ── load
+  async function load() {
+    initMap();
+    // count
+    const countRes = await fetch(`${SB_URL}/rest/v1/breweries?select=id`,{headers:{...SB_HEADERS,'Prefer':'count=exact','Range':'0-0'}});
+    const total = countRes.headers.get('content-range')?.split('/')[1]||'1000+';
+    document.getElementById('totalBreweries').textContent = Number(total).toLocaleString('pt-BR');
+
+    // load breweries with coords (up to 500)
+    const data = await sbFetch('breweries', `?select=id,slug,name,city,state,latitude,longitude,logo_url,identity_tags,has_taproom&latitude=not.is.null&limit=500&order=name.asc`);
+    if (!data) { document.getElementById('breweryList').innerHTML = `<div style="padding:40px;text-align:center;color:var(--ink3);font-family:var(--ff-mono)">Erro ao carregar dados.</div>`; return; }
+    allBreweries = data;
+    renderList(data);
+    renderMarkers(data);
+
+    if (urlState) applyFilters();
+
+    // fit map
+    const withCoords = data.filter(b=>b.latitude);
+    if (withCoords.length > 1) map.fitBounds(withCoords.map(b=>[b.latitude,b.longitude]), { padding:[40,40], maxZoom:8 });
+  }
+
+  load();
+  </script>
+</body>
+</html>

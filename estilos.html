@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Estilos de Cerveja — HopPass</title>
+  <link rel="stylesheet" href="../css/design-system.css">
+  <style>
+.page-hero { background:var(--ink);padding:52px 0 40px; }
+.page-hero h1 { font-family:var(--ff-display);font-size:2.8rem;font-weight:700;color:var(--paper);line-height:1.1;margin-bottom:10px; }
+.page-hero p  { font-size:.9rem;color:rgba(245,240,232,.52);max-width:500px;line-height:1.6; }
+
+/* families filter */
+.families-bar { background:var(--paper2);border-bottom:1px solid var(--paper3);padding:14px 0;position:sticky;top:62px;z-index:100;overflow-x:auto; }
+.families-inner { display:flex;gap:8px;align-items:center; }
+.fam-chip { padding:7px 18px;border-radius:100px;border:1px solid var(--paper3);background:var(--paper);font-family:var(--ff-mono);font-size:.7rem;cursor:pointer;transition:all .18s;color:var(--ink2);white-space:nowrap;flex-shrink:0; }
+.fam-chip.active { background:var(--ink);color:var(--paper);border-color:var(--ink); }
+.fam-chip:hover:not(.active) { border-color:var(--amber);color:var(--amber); }
+
+/* styles grid */
+.styles-section { padding:52px 0; }
+.styles-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:20px; }
+.style-card { border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--paper3);cursor:pointer;transition:transform .22s,box-shadow .22s; }
+.style-card:hover { transform:translateY(-4px);box-shadow:var(--shadow-md); }
+.style-card--featured { grid-column:span 2; }
+.style-card__header { padding:24px 24px 18px;position:relative;overflow:hidden; }
+.style-card__emoji { font-size:2.2rem;display:block;margin-bottom:8px; }
+.style-card__name  { font-family:var(--ff-display);font-size:1.3rem;font-weight:700;color:white;margin-bottom:4px; }
+.style-card--featured .style-card__name { font-size:1.8rem; }
+.style-card__origin { font-family:var(--ff-mono);font-size:.62rem;color:rgba(255,255,255,.5);letter-spacing:.07em; }
+.style-card__body { padding:18px 24px;background:var(--foam); }
+.style-card__desc  { font-size:.85rem;color:var(--ink2);line-height:1.6;margin-bottom:12px; }
+.style-card__attrs { display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px; }
+.sattr .n { font-family:var(--ff-display);font-size:1rem;font-weight:600;color:var(--amber);display:block; }
+.sattr .l { font-family:var(--ff-mono);font-size:.58rem;color:var(--ink3); }
+.style-card__footer { display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid var(--paper3); }
+.style-card__dots { font-family:var(--ff-mono);font-size:.7rem; }
+.style-card__count { font-family:var(--ff-mono);font-size:.7rem;color:var(--ink3); }
+.style-card__count strong { color:var(--amber); }
+
+/* comparison */
+.compare-section { padding:60px 0;background:var(--paper2); }
+.compare-grid { display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start; }
+.compare-table { width:100%;border-collapse:collapse; }
+.compare-table th { font-family:var(--ff-mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);text-align:left;padding:9px 0;border-bottom:2px solid var(--paper3); }
+.compare-table td { padding:9px 0;border-bottom:1px solid var(--paper3);vertical-align:middle; }
+.compare-table td:first-child { font-family:var(--ff-mono);font-size:.76rem;font-weight:500; }
+.mini-bar-row { display:flex;gap:3px; }
+.mini-bar { width:16px;height:8px;border-radius:2px; }
+
+@keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+  <div id="nav-placeholder" data-page="estilos.html"></div>
+
+  <section class="page-hero">
+    <div class="container">
+      <p class="t-label" style="color:var(--amber3);margin-bottom:12px">📚 Guia</p>
+      <h1>Estilos de cerveja<br>artesanal</h1>
+      <p class="mt-8">Aprende a reconhecer, apreciar e escolher cada estilo do universo craft — da IPA lupulada ao Stout imperial.</p>
+    </div>
+  </section>
+
+  <!-- families filter -->
+  <div class="families-bar">
+    <div class="container">
+      <div class="families-inner" id="familiesBar">
+        <button class="fam-chip active" data-fam="">Todos</button>
+        <div style="display:flex;gap:8px" id="famChips">
+          <!-- loaded dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- grid -->
+  <section class="styles-section">
+    <div class="container">
+      <div class="section-header"><h2 id="stylesTitle">Todos os estilos</h2><span class="t-label" id="stylesCount">—</span></div>
+      <div class="styles-grid" id="stylesGrid">
+        ${Array(9).fill(0).map(()=>`<div class="skeleton" style="height:260px;border-radius:14px"></div>`).join('')}
+      </div>
+    </div>
+  </section>
+
+  <!-- comparison -->
+  <section class="compare-section">
+    <div class="container">
+      <div class="section-header"><h2>Comparar perfis de sabor</h2></div>
+      <div class="compare-grid">
+        <div>
+          <p style="color:var(--ink3);font-size:.88rem;line-height:1.6;margin-bottom:22px">Cada estilo tem um perfil de amargor, corpo e dulçor distintos. Usa esta tabela para escolher a tua próxima cerveja.</p>
+          <table class="compare-table">
+            <thead><tr><th>Estilo</th><th>Amargor</th><th style="padding-left:8px">Corpo</th></tr></thead>
+            <tbody id="compareTable"></tbody>
+          </table>
+        </div>
+        <div>
+          <div style="background:var(--ink);border-radius:var(--radius-lg);padding:28px">
+            <p class="t-label" style="color:rgba(245,240,232,.38);margin-bottom:14px">Para principiantes</p>
+            <div id="beginnerRecs" style="display:flex;flex-direction:column;gap:10px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="footer-placeholder"></div>
+
+  <script src="../js/shared.js"></script>
+  <script>
+  const STYLE_BKGS = {
+    'IPA':'linear-gradient(135deg,#D4860A,#FBBF24)',
+    'Sour':'linear-gradient(135deg,#C0392B,#E74C3C)',
+    'Stout':'linear-gradient(135deg,#2C1810,#4A3728)',
+    'Weiss':'linear-gradient(135deg,#B8860B,#F0A020)',
+    'Lager':'linear-gradient(135deg,#C8A000,#DAA520)',
+    'Farmhouse':'linear-gradient(135deg,#4A6741,#6B8F5F)',
+    'Porter':'linear-gradient(135deg,#3D2314,#6B4226)',
+    'Barleywine':'linear-gradient(135deg,#6B2D0F,#A0522D)',
+    'German':'linear-gradient(135deg,#8B6914,#B8860B)',
+    'Pilsner':'linear-gradient(135deg,#A89000,#D4B800)',
+    'default':'linear-gradient(135deg,#6B5740,#9A7B5A)',
+  };
+  const STYLE_EMOJIS = {'IPA':'🌿','Sour':'🍋','Stout':'🖤','Weiss':'🌾','Lager':'🍺','Farmhouse':'🌻','Porter':'☕','Barleywine':'🍯','German':'🥨','Pilsner':'🌙','default':'🍶'};
+
+  function styleBg(name) { for(const[k,v] of Object.entries(STYLE_BKGS)) if(name?.includes(k)) return v; return STYLE_BKGS.default; }
+  function styleEmoji(name) { for(const[k,v] of Object.entries(STYLE_EMOJIS)) if(name?.includes(k)) return v; return STYLE_EMOJIS.default; }
+  function miniBars(n, max=5) {
+    n = Math.round(n||0);
+    return `<div class="mini-bar-row">${Array.from({length:max},(_,i)=>`<div class="mini-bar" style="background:${i<n?'var(--amber)':'var(--paper3)'}"></div>`).join('')}</div>`;
+  }
+  function dots(n, max=5) { return Array.from({length:max},(_,i)=>i<Math.round(n||0)?'●':'○').join(''); }
+
+  let allStyles = [];
+  let activeFam = '';
+
+  function renderStyles(data) {
+    document.getElementById('stylesCount').textContent = `${data.length} estilos`;
+    document.getElementById('stylesGrid').innerHTML = data.map((s,i) => {
+      const bg = styleBg(s.name);
+      const emoji = styleEmoji(s.name);
+      const featured = i < 2;
+      const abvRange = s.abv_min&&s.abv_max ? `${s.abv_min}–${s.abv_max}%` : s.abv_avg ? `~${s.abv_avg}%` : '—';
+      const ibuRange = s.ibu_min&&s.ibu_max ? `${s.ibu_min}–${s.ibu_max}` : '—';
+      return `<div class="style-card${featured?' style-card--featured':''}">
+        <div class="style-card__header" style="background:${bg}">
+          <span class="style-card__emoji">${emoji}</span>
+          <p class="style-card__name">${s.name}</p>
+          ${s.origin_country?`<p class="style-card__origin">${s.origin_country}${s.origin_era?' · '+s.origin_era:''}</p>`:''}
+        </div>
+        <div class="style-card__body">
+          ${s.description?`<p class="style-card__desc">${s.description.slice(0,180)}${s.description.length>180?'...':''}</p>`:''}
+          <div class="style-card__attrs">
+            <div class="sattr"><span class="n">${abvRange}</span><span class="l">ABV</span></div>
+            <div class="sattr"><span class="n">${ibuRange}</span><span class="l">IBU</span></div>
+            ${s.beers_count?`<div class="sattr"><span class="n">${fmtN(s.beers_count)}</span><span class="l">cervejas</span></div>`:''}
+          </div>
+          <div class="style-card__footer">
+            <span class="style-card__dots">Amargor: ${dots(s.bitterness_avg)}</span>
+            <a href="cervejas.html?style=${encodeURIComponent(s.name)}" class="btn btn--amber btn--sm">Ver cervejas →</a>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  async function load() {
+    const data = await db.styles.all(50);
+    if (!data) return;
+    allStyles = data;
+
+    // families
+    const fams = [...new Set(data.map(s=>s.family).filter(Boolean))].slice(0,8);
+    document.getElementById('famChips').innerHTML = fams.map(f =>
+      `<button class="fam-chip" data-fam="${f}" onclick="filterFam('${f}',this)">${f}</button>`
+    ).join('');
+
+    renderStyles(data);
+
+    // compare table
+    document.getElementById('compareTable').innerHTML = data.slice(0,8).map(s=>`
+      <tr>
+        <td>${s.name}</td>
+        <td>${miniBars(s.bitterness_avg)}</td>
+        <td style="padding-left:8px">${miniBars(s.body_avg)}</td>
+      </tr>`).join('');
+
+    // beginner recs
+    const beginners = data.filter(s=>s.bitterness_avg&&s.bitterness_avg<3).slice(0,3);
+    document.getElementById('beginnerRecs').innerHTML = beginners.map(s=>`
+      <div style="display:flex;gap:12px;align-items:center;background:rgba(245,240,232,.05);border:1px solid rgba(245,240,232,.1);border-radius:var(--radius-lg);padding:13px 15px">
+        <span style="font-size:1.4rem">${styleEmoji(s.name)}</span>
+        <div>
+          <p style="font-family:var(--ff-mono);font-size:.76rem;font-weight:500;color:var(--paper)">${s.name}</p>
+          <p style="font-family:var(--ff-mono);font-size:.62rem;color:rgba(245,240,232,.45);margin-top:1px">${s.description?.slice(0,60)||'—'}...</p>
+        </div>
+      </div>`).join('');
+  }
+
+  function filterFam(fam, el) {
+    document.querySelectorAll('.fam-chip').forEach(c=>c.classList.remove('active'));
+    el.classList.add('active');
+    activeFam = fam;
+    const filtered = fam ? allStyles.filter(s=>s.family===fam) : allStyles;
+    document.getElementById('stylesTitle').textContent = fam || 'Todos os estilos';
+    renderStyles(filtered);
+  }
+
+  // "Todos" button
+  document.querySelector('.fam-chip[data-fam=""]').addEventListener('click', function(){
+    document.querySelectorAll('.fam-chip').forEach(c=>c.classList.remove('active'));
+    this.classList.add('active');
+    activeFam='';
+    document.getElementById('stylesTitle').textContent='Todos os estilos';
+    renderStyles(allStyles);
+  });
+
+  load();
+  </script>
+</body>
+</html>

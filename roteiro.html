@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Roteiro — HopPass</title>
+  <link rel="stylesheet" href="../css/design-system.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+/* hero */
+.route-hero { position:relative;overflow:hidden;min-height:480px;display:flex;align-items:flex-end; }
+.route-hero__bg { position:absolute;inset:0;background-size:cover;background-position:center; }
+.route-hero__overlay { position:absolute;inset:0;background:linear-gradient(to top,rgba(26,18,8,.95) 0%,rgba(26,18,8,.5) 60%,rgba(26,18,8,.2) 100%); }
+.route-hero__content { position:relative;z-index:2;padding:48px 0 56px;width:100%; }
+.route-hero__back { font-family:var(--ff-mono);font-size:.7rem;color:rgba(255,255,255,.5);margin-bottom:18px;display:block; }
+.route-hero__back a { color:var(--amber3); }
+.route-hero__title { font-family:var(--ff-display);font-size:clamp(2rem,4vw,3.2rem);font-weight:700;color:white;line-height:1.08;margin-bottom:10px; }
+.route-hero__sub   { font-size:.95rem;color:rgba(255,255,255,.6);max-width:560px;line-height:1.6;margin-bottom:22px; }
+.route-hero__chips { display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px; }
+.route-hero__chip  { background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:100px;padding:6px 16px;font-family:var(--ff-mono);font-size:.68rem;color:white; }
+.route-hero__stats { display:flex;gap:32px;padding-top:24px;border-top:1px solid rgba(255,255,255,.1); }
+.route-hero__stat .n { font-family:var(--ff-display);font-size:1.6rem;font-weight:700;color:var(--amber3);display:block; }
+.route-hero__stat .l { font-family:var(--ff-mono);font-size:.6rem;color:rgba(255,255,255,.4);text-transform:uppercase; }
+
+/* ── main ── */
+.route-main { padding:56px 0; }
+.route-grid { display:grid;grid-template-columns:1fr 380px;gap:48px;align-items:start; }
+
+/* ── stops ── */
+.stops-list { }
+.stop-item { display:grid;grid-template-columns:auto 1fr;gap:0;margin-bottom:0; }
+.stop-item__line { display:flex;flex-direction:column;align-items:center;margin-right:20px; }
+.stop-item__dot  { width:32px;height:32px;border-radius:50%;background:var(--amber);border:3px solid var(--ink);display:flex;align-items:center;justify-content:center;font-family:var(--ff-mono);font-size:.68rem;font-weight:700;color:white;flex-shrink:0;z-index:1;position:relative; }
+.stop-item__connector { width:2px;flex:1;min-height:20px;background:var(--paper3);margin:4px 0; }
+.stop-item:last-child .stop-item__connector { display:none; }
+.stop-card { background:var(--foam);border:1px solid var(--paper3);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px;transition:box-shadow .2s; }
+.stop-card:hover { box-shadow:var(--shadow); }
+.stop-card__header { display:flex;gap:14px;align-items:flex-start;margin-bottom:12px; }
+.stop-card__logo { width:48px;height:48px;border-radius:50%;background-size:cover;background-position:center;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--ff-display);font-size:1rem;font-weight:700;color:white; }
+.stop-card__name { font-family:var(--ff-display);font-size:1.05rem;font-weight:600;margin-bottom:3px; }
+.stop-card__loc  { font-family:var(--ff-mono);font-size:.68rem;color:var(--ink3); }
+.stop-card__tags { display:flex;gap:5px;flex-wrap:wrap;margin-top:8px; }
+.stop-card__note { font-size:.85rem;color:var(--ink3);line-height:1.55;margin-top:10px;padding-top:10px;border-top:1px solid var(--paper3);font-style:italic; }
+.stop-card__beers { margin-top:14px; }
+.stop-card__beers-title { font-family:var(--ff-mono);font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);margin-bottom:10px; }
+.stop-beers-scroll { display:flex;gap:10px;overflow-x:auto;scrollbar-width:none; }
+.stop-beers-scroll::-webkit-scrollbar{display:none}
+.stop-beer-can { flex:0 0 90px;text-align:center;cursor:pointer;text-decoration:none;color:inherit; }
+.stop-beer-can img { width:40px;height:58px;object-fit:contain;margin:0 auto 4px; }
+.stop-beer-can span { font-family:var(--ff-mono);font-size:.58rem;display:block;line-height:1.3; }
+.stop-card__actions { display:flex;gap:8px;margin-top:14px; }
+
+/* ── atrações ── */
+.attractions-section { margin-top:48px; }
+.attraction-cards { display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px; }
+.attr-card { border-radius:var(--radius-lg);overflow:hidden;background:var(--foam);border:1px solid var(--paper3);cursor:pointer;transition:transform .2s,box-shadow .2s; }
+.attr-card:hover { transform:translateY(-3px);box-shadow:var(--shadow-md); }
+.attr-card__img { height:120px;background-size:cover;background-position:center;position:relative; }
+.attr-card__img-overlay { position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(26,18,8,.6)); }
+.attr-card__type { position:absolute;top:8px;left:10px;background:rgba(26,18,8,.6);color:white;border-radius:100px;padding:3px 10px;font-family:var(--ff-mono);font-size:.58rem; }
+.attr-card__body { padding:12px 14px; }
+.attr-card__name { font-family:var(--ff-mono);font-size:.76rem;font-weight:500;margin-bottom:4px; }
+.attr-card__tip  { font-size:.8rem;color:var(--ink3);line-height:1.45; }
+.attr-card__dist { font-family:var(--ff-mono);font-size:.62rem;color:var(--ink3);margin-top:6px; }
+
+/* ── gastronomia ── */
+.gastronomy-section { margin-top:48px; }
+.gastro-grid { display:grid;grid-template-columns:1fr 1fr;gap:14px; }
+.gastro-card { display:flex;gap:12px;background:var(--foam);border:1px solid var(--paper3);border-radius:var(--radius-lg);overflow:hidden; }
+.gastro-card__img { width:80px;flex-shrink:0;background-size:cover;background-position:center; }
+.gastro-card__body { padding:14px 14px 14px 0;flex:1; }
+.gastro-card__dish { font-family:var(--ff-display);font-size:.92rem;font-weight:600;margin-bottom:3px; }
+.gastro-card__restaurant { font-family:var(--ff-mono);font-size:.62rem;color:var(--ink3);margin-bottom:6px; }
+.gastro-card__desc { font-size:.8rem;color:var(--ink3);line-height:1.45;margin-bottom:6px; }
+.gastro-card__pairing { font-family:var(--ff-mono);font-size:.62rem;color:var(--amber);display:flex;align-items:center;gap:4px; }
+
+/* ── dicas ── */
+.tips-section { margin-top:48px; }
+.tips-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px; }
+.tip-card { background:var(--ink);border-radius:var(--radius-lg);padding:22px 20px;display:flex;flex-direction:column;gap:12px; }
+.tip-card__icon { font-size:1.6rem; }
+.tip-card__text { font-size:.88rem;color:rgba(245,240,232,.72);line-height:1.6; }
+
+/* ── sidebar ── */
+.route-sidebar { position:sticky;top:82px; }
+#route-map { height:280px;border-radius:var(--radius-lg);overflow:hidden; }
+.sidebar-info { background:var(--foam);border:1px solid var(--paper3);border-radius:var(--radius-lg);padding:20px;margin-top:16px; }
+.sidebar-row { display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--paper3); }
+.sidebar-row:last-child { border-bottom:none; }
+.sidebar-row__label { font-family:var(--ff-mono);font-size:.7rem;color:var(--ink3); }
+.sidebar-row__val   { font-family:var(--ff-mono);font-size:.73rem;font-weight:500; }
+.sidebar-cta { background:var(--amber);border-radius:var(--radius-lg);padding:20px;text-align:center;margin-top:16px; }
+.sidebar-cta h4 { font-family:var(--ff-display);font-size:1.1rem;font-weight:600;margin-bottom:6px; }
+.sidebar-cta p  { font-size:.82rem;color:var(--ink2);margin-bottom:14px;line-height:1.5; }
+
+@keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+  <div id="nav-placeholder" data-page="roteiros.html"></div>
+
+  <!-- hero loading -->
+  <div id="routeHero" class="route-hero">
+    <div class="route-hero__bg skeleton" style="position:absolute;inset:0"></div>
+    <div class="route-hero__overlay"></div>
+    <div class="container route-hero__content">
+      <div class="skeleton" style="height:28px;width:200px;border-radius:4px;margin-bottom:16px"></div>
+      <div class="skeleton" style="height:56px;width:60%;border-radius:6px;margin-bottom:12px"></div>
+      <div class="skeleton" style="height:24px;width:80%;border-radius:4px"></div>
+    </div>
+  </div>
+
+  <section class="route-main">
+    <div class="container">
+      <div class="route-grid">
+        <div id="routeMain">
+          <div style="display:flex;align-items:center;gap:12px;padding:40px 0;color:var(--ink3);font-family:var(--ff-mono);font-size:.78rem">
+            <div style="width:18px;height:18px;border:2px solid var(--paper3);border-top-color:var(--amber);border-radius:50%;animation:spin .8s linear infinite"></div>
+            A carregar roteiro...
+          </div>
+        </div>
+        <div class="route-sidebar">
+          <div id="route-map" class="map-wrap skeleton"></div>
+          <div class="sidebar-info" id="sidebarInfo">
+            ${Array(4).fill(0).map(()=>`<div class="sidebar-row"><div class="skeleton" style="height:14px;width:60%;border-radius:3px"></div><div class="skeleton" style="height:14px;width:30%;border-radius:3px"></div></div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="footer-placeholder"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="../js/shared.js"></script>
+  <script>
+  const slug = new URLSearchParams(location.search).get('slug');
+
+  // fallback placeholder images for attractions
+  function attrBg(a) {
+    if (a.photo_url) return `url('${a.photo_url}')`;
+    const typeColors = { restaurante:'#4A3520', bar:'#2C1810', parque:'#2A4020', museu:'#1A2840', default:'#3A2C20' };
+    const c = typeColors[a.type?.toLowerCase()] || typeColors.default;
+    return `linear-gradient(135deg,${c},${c}99)`;
+  }
+  function gastroBg(g) {
+    if (g.photo_url) return `url('${g.photo_url}')`;
+    return `linear-gradient(135deg,#4A3520,#6B4A28)`;
+  }
+
+  async function load() {
+    if (!slug) { document.getElementById('routeMain').innerHTML = `<p>Roteiro não encontrado.</p>`; return; }
+
+    const [routeArr, stops, attractions, gastronomy, tips] = await Promise.all([
+      db.routes.bySlug(slug),
+      (async()=>{ const r=await db.routes.bySlug(slug); if(!r?.[0]) return []; return db.routes.breweries(r[0].id); })(),
+      (async()=>{ const r=await db.routes.bySlug(slug); if(!r?.[0]) return []; return db.routes.attractions(r[0].id); })(),
+      (async()=>{ const r=await db.routes.bySlug(slug); if(!r?.[0]) return []; return db.routes.gastronomy(r[0].id); })(),
+      (async()=>{ const r=await db.routes.bySlug(slug); if(!r?.[0]) return []; return db.routes.tips(r[0].id); })(),
+    ]);
+
+    const route = routeArr?.[0];
+    if (!route) { document.getElementById('routeMain').innerHTML = `<p style="color:var(--ink3);font-family:var(--ff-mono)">Roteiro não encontrado.</p>`; return; }
+
+    document.title = `${route.name} — HopPass`;
+
+    // ── hero
+    const heroBg = route.cover_image_url ? `url('${route.cover_image_url}')` : `linear-gradient(135deg,#1A3A2C,#0A2010)`;
+    const hs = (route.highlights||[]).slice(0,4);
+    document.getElementById('routeHero').innerHTML = `
+      <div class="route-hero__bg" style="background:${heroBg};background-size:cover;background-position:center"></div>
+      <div class="route-hero__overlay"></div>
+      <div class="container route-hero__content">
+        <a href="roteiros.html" class="route-hero__back">← <a href="roteiros.html" style="color:var(--amber3)">Roteiros</a> / ${route.name}</a>
+        <h1 class="route-hero__title">${route.name}</h1>
+        <p class="route-hero__sub">${route.description||''}</p>
+        ${hs.length?`<div class="route-hero__chips">${hs.map(h=>`<span class="route-hero__chip">${h}</span>`).join('')}</div>`:''}
+        <div class="route-hero__stats">
+          <div class="route-hero__stat"><span class="n">${route.brewery_count||stops?.length||'?'}</span><span class="l">Paradas</span></div>
+          <div class="route-hero__stat"><span class="n">${route.duration_days===1?'1 dia':(route.duration_days||1)+' dias'}</span><span class="l">Duração</span></div>
+          ${route.distance_km?`<div class="route-hero__stat"><span class="n">${route.distance_km}km</span><span class="l">Distância</span></div>`:''}
+          ${route.budget_estimate?`<div class="route-hero__stat"><span class="n" style="font-size:1.1rem">${route.budget_estimate}</span><span class="l">Orçamento</span></div>`:''}
+        </div>
+      </div>`;
+
+    // ── sidebar info
+    document.getElementById('sidebarInfo').innerHTML = `
+      ${[
+        ['Região', `${route.city||''}${route.city&&route.state?', ':''}${route.state||''}`],
+        ['Duração', route.duration_days===1?'1 dia':(route.duration_days||1)+' dias'],
+        ['Distância', route.distance_km?`${route.distance_km} km`:'—'],
+        ['Estilo dominante', route.dominant_style||'—'],
+        ['Melhor época', route.best_season||'—'],
+        ['Orçamento', route.budget_estimate||'—'],
+      ].filter(([,v])=>v&&v!=='—').map(([l,v])=>`
+        <div class="sidebar-row"><span class="sidebar-row__label">${l}</span><span class="sidebar-row__val">${v}</span></div>
+      `).join('')}`;
+
+    // ── sidebar cta
+    const ctaDiv = document.createElement('div');
+    ctaDiv.className = 'sidebar-cta';
+    ctaDiv.innerHTML = `<h4>Fazer este roteiro</h4><p>Regista as tuas visitas e coleciona o badge deste roteiro no teu passaporte.</p><a href="#" class="btn btn--primary w-full" style="justify-content:center">Começar roteiro</a>`;
+    document.querySelector('.route-sidebar').appendChild(ctaDiv);
+
+    // ── map
+    const mapEl = document.getElementById('route-map');
+    mapEl.style.height = '280px';
+    const map = L.map('route-map',{center:[-20,-48],zoom:5,zoomControl:true});
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:18}).addTo(map);
+    const coords = [];
+    (stops||[]).forEach((s,i)=>{
+      const b = s.breweries;
+      if (!b?.latitude||!b?.longitude) return;
+      coords.push([b.latitude,b.longitude]);
+      L.marker([b.latitude,b.longitude],{icon:numberedMarker(L,i+1)}).addTo(map).bindPopup(`<strong>${b.name}</strong>`);
+    });
+    if (coords.length>1) { L.polyline(coords,{color:'#D4860A',weight:3,dashArray:'8 5'}).addTo(map); map.fitBounds(coords,{padding:[20,20]}); }
+    else if (coords.length===1) map.setView(coords[0],12);
+
+    // ── stops
+    const mainEl = document.getElementById('routeMain');
+    let html = `<h2 style="font-family:var(--ff-display);font-size:1.6rem;margin-bottom:28px">Paradas do roteiro</h2>
+      <div class="stops-list">`;
+
+    for (let i=0; i<(stops||[]).length; i++) {
+      const s = stops[i];
+      const b = s.breweries;
+      if (!b) continue;
+      const [c1,c2] = styleColors((b.identity_tags||[])[0]||'');
+      const logoBg = b.logo_url ? `background-image:url('${b.logo_url}')` : `background:linear-gradient(135deg,${c1},${c2})`;
+      const tags = (b.identity_tags||[]).slice(0,3);
+
+      // beers for this brewery
+      const beers = await db.beers.byBrewery(b.id, 6);
+
+      html += `<div class="stop-item">
+        <div class="stop-item__line">
+          <div class="stop-item__dot">${i+1}</div>
+          <div class="stop-item__connector"></div>
+        </div>
+        <div class="stop-card">
+          <div class="stop-card__header">
+            <div class="stop-card__logo" style="${logoBg}">${b.logo_url?'':breweryInitials(b.name)}</div>
+            <div>
+              <p class="stop-card__name">${b.name}</p>
+              <p class="stop-card__loc">📍 ${b.city||''}, ${b.state||''}</p>
+              ${tags.length?`<div class="stop-card__tags">${tags.map(t=>`<span class="tag tag--amber" style="font-size:.6rem">${t}</span>`).join('')}</div>`:''}
+            </div>
+          </div>
+          ${s.stop_notes?`<p class="stop-card__note">"${s.stop_notes}"</p>`:''}
+          ${beers?.length?`<div class="stop-card__beers">
+            <p class="stop-card__beers-title">Cervejas em catálogo</p>
+            <div class="stop-beers-scroll">
+              ${beers.map(bv=>`<a href="cerveja.html?slug=${bv.slug}" class="stop-beer-can">
+                <img src="${beerImg(bv)}" alt="${bv.name}" onerror="this.src='${canSVG(bv.name,bv.style)}'">
+                <span>${bv.name}</span>
+                ${bv.avg_rating?`<span style="color:var(--amber)">${Number(bv.avg_rating).toFixed(1)} ★</span>`:''}
+              </a>`).join('')}
+            </div>
+          </div>`:''}
+          <div class="stop-card__actions">
+            <a href="cervejaria.html?slug=${b.slug}" class="btn btn--outline btn--sm">Ver cervejaria</a>
+            ${b.website?`<a href="${b.website}" target="_blank" class="btn btn--sm" style="background:var(--paper2)">Site oficial ↗</a>`:''}
+          </div>
+        </div>
+      </div>`;
+    }
+    html += `</div>`;
+
+    // attractions
+    if (attractions?.length) {
+      html += `<div class="attractions-section">
+        <h2 style="font-family:var(--ff-display);font-size:1.4rem;margin-bottom:18px">Pontos de interesse</h2>
+        <div class="attraction-cards">
+          ${attractions.map(a=>`
+            <div class="attr-card">
+              <div class="attr-card__img" style="background:${attrBg(a)};background-size:cover;background-position:center">
+                <div class="attr-card__img-overlay"></div>
+                ${a.type?`<span class="attr-card__type">${a.type}</span>`:''}
+              </div>
+              <div class="attr-card__body">
+                <p class="attr-card__name">${a.name}</p>
+                ${a.description?`<p class="attr-card__tip">${a.description}</p>`:''}
+                ${a.tip?`<p class="attr-card__tip" style="margin-top:4px;color:var(--amber)">💡 ${a.tip}</p>`:''}
+                ${a.distance_km?`<p class="attr-card__dist">🗺️ ${a.distance_km} km</p>`:''}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+    }
+
+    // gastronomy
+    if (gastronomy?.length) {
+      html += `<div class="gastronomy-section">
+        <h2 style="font-family:var(--ff-display);font-size:1.4rem;margin-bottom:18px">Gastronomia local</h2>
+        <div class="gastro-grid">
+          ${gastronomy.map(g=>`
+            <div class="gastro-card">
+              <div class="gastro-card__img" style="background:${gastroBg(g)};background-size:cover;background-position:center"></div>
+              <div class="gastro-card__body">
+                <p class="gastro-card__dish">${g.dish_name}</p>
+                ${g.restaurant_name?`<p class="gastro-card__restaurant">📍 ${g.restaurant_name}</p>`:''}
+                ${g.description?`<p class="gastro-card__desc">${g.description}</p>`:''}
+                ${g.beer_pairing?`<p class="gastro-card__pairing">🍺 Harmoniza com: ${g.beer_pairing}</p>`:''}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+    }
+
+    // tips
+    if (tips?.length) {
+      html += `<div class="tips-section">
+        <h2 style="font-family:var(--ff-display);font-size:1.4rem;margin-bottom:18px">Dicas essenciais</h2>
+        <div class="tips-grid">
+          ${tips.map(t=>`
+            <div class="tip-card">
+              ${t.icon?`<span class="tip-card__icon">${t.icon}</span>`:''}
+              <p class="tip-card__text">${t.text}</p>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+    }
+
+    mainEl.innerHTML = html;
+  }
+
+  load();
+  </script>
+</body>
+</html>
